@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/myappbar.dart';
 
-class MapView extends StatefulWidget{
+class Board extends StatefulWidget{
   @override
   State<StatefulWidget> createState() {
-    return _MapViewState();
+    return _BoardState();
   }
 }
 
-class _MapViewState extends State<MapView>{
+class _BoardState extends State<Board>{
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: MyAppBar(),
-      body: NaverMap(), // NaverMap
+      body: Text("게시판 페이지"),
     );
   }
 }

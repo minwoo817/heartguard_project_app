@@ -1,6 +1,11 @@
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
-import 'package:heartguard_project_app/HeartGuard/layout/myapp.dart';
+import 'package:heartguard_project_app/HeartGuard/board/board.dart';
+import 'package:heartguard_project_app/HeartGuard/layout/home.dart';
+import 'package:heartguard_project_app/HeartGuard/map/mapview.dart';
+import 'package:heartguard_project_app/HeartGuard/user/login.dart';
+import 'package:heartguard_project_app/HeartGuard/user/report.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,4 +20,21 @@ void main() async {
             print("인증 실패: $ex"),
       });
   runApp(MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      initialRoute: "/",
+      routes: {
+        "/" : (context) => Home(), // 홈화면
+        "/login" : (context) => Login(), // 로그인(유저아이콘)
+        "/report" : (context) => Report(), // 신고(호출)하기
+        "/mapview" : (context) => MapView(), // 지도
+        "/board" : (context) => Board(), // 게시판
+      }
+    );
+
+  }
 }
