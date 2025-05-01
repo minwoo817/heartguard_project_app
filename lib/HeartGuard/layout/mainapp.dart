@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:heartguard_project_app/HeartGuard/map/mapview.dart';
 
 class MainApp extends StatefulWidget {
   @override
@@ -10,6 +11,15 @@ class MainApp extends StatefulWidget {
 class _MainAppState extends State<MainApp> {
   @override
   Widget build(BuildContext context) {
-    return Text("aa");
+    return Scaffold(
+      appBar: AppBar(title: Text("헤더"),),
+      body: TextButton(onPressed: ()=>{
+        Navigator.pushReplacement(
+        context ,
+        MaterialPageRoute( builder : (content) => MapView() )
+        )
+      }, child: Text("지도이동")),
+
+    );
   }
 }
