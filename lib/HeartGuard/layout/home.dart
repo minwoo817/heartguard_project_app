@@ -19,7 +19,7 @@ class _HomeState extends State<Home>{
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 70.0, horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(vertical: 70.0, horizontal: 45.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -36,7 +36,12 @@ class _HomeState extends State<Home>{
                             borderRadius: BorderRadius.circular(8)
                           ),
                         ),
-                        child: Text("신고하기"),
+                        child: Text("신고하기",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
                     SizedBox(height: 20),
@@ -54,7 +59,12 @@ class _HomeState extends State<Home>{
                             borderRadius: BorderRadius.circular(8)
                           ),
                         ),
-                        child: Text("AED 찾기"),
+                        child: Text("AED 찾기",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
                     SizedBox(height: 20),
@@ -72,7 +82,12 @@ class _HomeState extends State<Home>{
                             borderRadius: BorderRadius.circular(8)
                           ),
                         ),
-                        child: Text("응급실 찾기"),
+                        child: Text("응급실 찾기",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ),
                     ),
                     SizedBox(height: 20),
@@ -92,7 +107,12 @@ class _HomeState extends State<Home>{
                                   borderRadius: BorderRadius.circular(8)
                                 ),
                               ),
-                              child: Text("CPR, AED 가이드"),
+                              child: Text("CPR, AED 가이드",
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ),
                         ),
@@ -109,7 +129,12 @@ class _HomeState extends State<Home>{
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
-                              child: Text("AED 설치 제안"),
+                              child: Text("AED 설치 제안",
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
                             ),
                           ),
                         ),
