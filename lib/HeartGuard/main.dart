@@ -2,9 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:heartguard_project_app/HeartGuard/board/board.dart';
+import 'package:heartguard_project_app/HeartGuard/hospital/hlogin.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/adminhome.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/home.dart';
 import 'package:heartguard_project_app/HeartGuard/map/mapview.dart';
+import 'package:heartguard_project_app/HeartGuard/user/info.dart';
 import 'package:heartguard_project_app/HeartGuard/user/login.dart';
 import 'package:heartguard_project_app/HeartGuard/user/report.dart';
 
@@ -35,7 +37,8 @@ class MyApp extends StatelessWidget {
         "/mapview" : (context) => MapView(), // 지도
         "/board" : (context) => Board(), // 게시판
         "/adminhome" : (context) => AdminHome(), // 관리자 홈화면
-        
+        '/info': (context) => Info(), // 내정보(회원)
+        '/hlogin' : (context) => Hlogin(),
       }
     );
 

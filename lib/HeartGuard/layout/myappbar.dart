@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:heartguard_project_app/HeartGuard/user/info.dart';
+import 'package:heartguard_project_app/HeartGuard/user/login.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
@@ -32,14 +35,29 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
 
       // 오른쪽 아이콘
-      actions: [
-        IconButton(
-          icon: Icon(Icons.account_circle, size: 30,),
-          onPressed: () => {
-            Navigator.pushNamed(context, "/login")
-          },
-        )
-      ],
+        actions: [
+          IconButton(
+            icon: Icon(Icons.account_circle, size: 30),
+            onPressed: () async {
+              final prefs = await SharedPreferences.getInstance();
+              final token = prefs.getString('token');
+
+              if (token != null && token.isNotEmpty) {
+                // 로그인 되어 있음 → 내 정보 페이지로 이동
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Info()),
+                );
+              } else {
+                // 로그인 안 되어 있음 → 로그인 페이지로 이동
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => Login()),
+                );
+              }
+            },
+          ),
+        ]
     );
   }
 
