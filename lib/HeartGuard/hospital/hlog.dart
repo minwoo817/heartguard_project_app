@@ -1,5 +1,6 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:dio/dio.dart';
+import 'package:intl/intl.dart';
 
 void main() {
   runApp(Hlog());
@@ -11,8 +12,10 @@ class Hlog extends StatelessWidget {
     return MaterialApp(
       title: 'HeartGuard',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.red,
+        fontFamily: 'Roboto',
       ),
+      debugShowCheckedModeBanner: false,
       home: LogList(),
     );
   }
@@ -36,7 +39,7 @@ class _LogListState extends State<LogList> {
 
   Future<void> fetchLogs() async {
     final dio = Dio();
-    final token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJob3NwaXRhbDEiLCJpYXQiOjE3NDYxNjQ5MjksImV4cCI6MTc0NjI1MTMyOX0.E8PgiPAr823twwyVh39grbOGGot0wJYuKrF0ibAtKk4";
+    final token = "your_jwt_token_here";
 
     try {
       final response = await dio.get(
@@ -80,26 +83,24 @@ class _LogListState extends State<LogList> {
     }
   }
 
-  void accept(int lno) async{
+  void accept(int lno) async {
     final dio = Dio();
-    try{
+    try {
       final response = await dio.post(
         'http://192.168.40.40:8080/log/state',
         data: {
-          "lno" : lno,
-          "lstate" : 1,
+          "lno": lno,
+          "lstate": 1, // 수락 상태
         },
       );
-      if(response.statusCode == 200) {
-        fetchLogs();
+      if (response.statusCode == 200) {
+        fetchLogs(); // 데이터 새로고침
       }
-    }catch(e) {
+    } catch (e) {
       print(e);
     }
-    print("수락 버튼이 눌렸습니다.");
   }
 
-  // 거절 버튼을 누를 때 해당 lno와 lstate만 보내기
   void refuse(int lno) async {
     final dio = Dio();
     try {
@@ -111,7 +112,7 @@ class _LogListState extends State<LogList> {
         },
       );
       if (response.statusCode == 200) {
-        fetchLogs();  // 데이터 새로고침
+        fetchLogs(); // 데이터 새로고침
       }
     } catch (e) {
       print(e);
@@ -123,46 +124,83 @@ class _LogListState extends State<LogList> {
     return Scaffold(
       appBar: AppBar(
         title: Text('신고내역'),
+        backgroundColor: Colors.redAccent, // AppBar 색상 변경: FF5252FF 색상 사용
       ),
-      body: isLoading
-          ? Center(child: CircularProgressIndicator())
-          : errorMessage.isNotEmpty
-          ? Center(child: Text(errorMessage))
-          : ListView.builder(
-        itemCount: logs.length,
-        itemBuilder: (context, index) {
-          var log = logs[index];
+      body: SafeArea(
+        child: isLoading
+            ? Center(child: CircularProgressIndicator(color: Colors.redAccent)) // 로딩 인디케이터 색상
+            : errorMessage.isNotEmpty
+            ? Center(child: Text(errorMessage, style: TextStyle(fontSize: 18, color: Colors.redAccent)))
+            : ListView.builder(
+          itemCount: logs.length,
+          itemBuilder: (context, index) {
+            var log = logs[index];
 
-          return Card(
-            margin: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            elevation: 3,
-            child: Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("신고 번호: ${log['lno']}", style: TextStyle(fontWeight: FontWeight.bold)),
-                  SizedBox(height: 5),
-                  Text("위도: ${log['llat']}"),
-                  Text("경도: ${log['llong']}"),
-                  Text("상태: ${getStatusText(log['lsate'] ?? log['lstate'])}"),
-                  Text("생성일: ${log['create_at']}"),
-                  Text("전화번호: ${log['phone']}"),
-                  if (log['lstate'] == 2) ...[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,  // 버튼들을 양옆에 고르게 배치
-                      children: [
-                        TextButton(onPressed: () => accept(log['lno']), child: Text("수락")),
-                        TextButton(onPressed: () => refuse(log['lno']), child: Text("거절"),
-                        ),
-                      ],
+            return Card(
+              elevation: 6,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              margin: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 8),
+                    Text(
+                      "신고 번호: ${log['lno']}",
+                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                     ),
+                    Divider(height: 20, thickness: 1),
+                    buildInfoRow(Icons.location_on, "위치", "${log['llat']}, ${log['llong']}"),
+                    buildInfoRow(Icons.access_time, "생성일", log['create_at']),
+                    buildInfoRow(Icons.phone, "전화번호", log['phone']),
+                    buildInfoRow(Icons.info, "상태", getStatusText(log['lstate'] ?? log['lsate'])),
+                    SizedBox(height: 16),
+                    if (log['lstate'] == 2) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: [
+                          ElevatedButton(
+                            onPressed: () => accept(log['lno']),
+                            child: Text("수락" , style: TextStyle(color: Colors.white),),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.green,
+                            ),
+                          ),
+                          ElevatedButton(
+                            onPressed: () => refuse(log['lno']),
+                            child: Text("거절", style: TextStyle(color: Colors.white),),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.redAccent, // 거절 버튼 색상
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget buildInfoRow(IconData icon, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.redAccent),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              "$label: $value",
+              style: TextStyle(fontSize: 16),
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
