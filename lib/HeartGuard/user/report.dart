@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:get_phone_number/get_phone_number.dart';
+import 'package:heartguard_project_app/HeartGuard/layout/myappbar.dart';
 import 'package:intl/intl.dart'; // DateFormat을 사용하기 위한 import
 
 
@@ -73,6 +74,7 @@ class _SubmitPageState extends State<SubmitPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: MyAppBar(),
       backgroundColor: Colors.red.shade50,
       body: SafeArea(
         child: Center(
