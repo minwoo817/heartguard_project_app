@@ -2,10 +2,10 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(Hlog());
 }
 
-class MyApp extends StatelessWidget {
+class Hlog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -13,129 +13,156 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: LogList(hno: 1), // 예시로 병원 번호를 1로 설정
+      home: LogList(),
     );
   }
 }
 
 class LogList extends StatefulWidget {
-  final int hno; // 병원 번호
-
-  LogList({required this.hno});
-
   @override
   _LogListState createState() => _LogListState();
 }
 
 class _LogListState extends State<LogList> {
-  int page = 1; // 현재 페이지
-  List<dynamic> logList = []; // 로그 목록 상태변수
-  final dio = Dio(); // Dio 객체
-  String baseUrl = "http://192.168.40.40:8080"; // 기본 자바서버 URL
-  final ScrollController scrollController = ScrollController();
+  List<dynamic> logs = [];
+  bool isLoading = true;
+  String errorMessage = '';
 
   @override
   void initState() {
     super.initState();
-    fetchLogs(page); // 첫 페이지 로드
-    scrollController.addListener(onScroll); // 스크롤 리스너 추가
+    fetchLogs();
   }
 
-  // 1. 자바서버에게 로그 자료 요청
-  void fetchLogs(int currentPage) async {
+  Future<void> fetchLogs() async {
+    final dio = Dio();
+    final token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJob3NwaXRhbDEiLCJpYXQiOjE3NDYxNjQ5MjksImV4cCI6MTc0NjI1MTMyOX0.E8PgiPAr823twwyVh39grbOGGot0wJYuKrF0ibAtKk4";
+
     try {
       final response = await dio.get(
-        "$baseUrl/view?hno=${widget.hno}&page=${currentPage}", // 병원 번호와 페이지 번호를 전달
+        'http://192.168.40.40:8080/log/view',
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+          },
+        ),
       );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          logs = response.data;
+          isLoading = false;
+        });
+      } else {
+        setState(() {
+          errorMessage = '로그를 불러오는 데 실패했습니다.';
+          isLoading = false;
+        });
+      }
+    } catch (e) {
       setState(() {
-        page = currentPage;
-        if (page == 1) {
-          logList = response.data['content']; // 첫 페이지일 경우 데이터 덮어쓰기
-        } else if (page >= response.data['totalPages']) {
-          page = response.data['totalPages']; // 마지막 페이지 처리
-        } else {
-          logList.addAll(response.data['content']); // 다음 페이지일 경우 데이터 추가
-        }
+        errorMessage = '오류가 발생했습니다: $e';
+        isLoading = false;
       });
+    }
+  }
+
+  String getStatusText(dynamic state) {
+    switch (state.toString()) {
+      case '0':
+        return '거절';
+      case '1':
+        return '수락';
+      case '2':
+        return '대기중';
+      default:
+        return '알 수 없음';
+    }
+  }
+
+  void accept(int lno) async{
+    final dio = Dio();
+    try{
+      final response = await dio.post(
+        'http://192.168.40.40:8080/log/state',
+        data: {
+          "lno" : lno,
+          "lstate" : 1,
+        },
+      );
+      if(response.statusCode == 200) {
+        fetchLogs();
+      }
+    }catch(e) {
+      print(e);
+    }
+    print("수락 버튼이 눌렸습니다.");
+  }
+
+  // 거절 버튼을 누를 때 해당 lno와 lstate만 보내기
+  void refuse(int lno) async {
+    final dio = Dio();
+    try {
+      final response = await dio.post(
+        'http://192.168.40.40:8080/log/state',
+        data: {
+          "lno": lno,
+          "lstate": 0, // 거절 상태
+        },
+      );
+      if (response.statusCode == 200) {
+        fetchLogs();  // 데이터 새로고침
+      }
     } catch (e) {
       print(e);
     }
   }
 
-  // 2. 스크롤 리스너
-  void onScroll() {
-    if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 150) {
-      fetchLogs(page + 1); // 스크롤 바닥에 도달하면 다음 페이지 요청
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (logList.isEmpty) {
-      return Center(child: Text("조회된 로그가 없습니다."));
-    }
-
-    return ListView.builder(
-      controller: scrollController,
-      itemCount: logList.length,
-      itemBuilder: (context, index) {
-        final log = logList[index];
-
-        return InkWell(
-          onTap: () {
-            // 로그 항목 클릭 시 상세보기 페이지로 이동 (예시로 로그 번호를 넘기기)
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => LogDetailPage(logId: log['id'])),
-            );
-          },
-          child: Card(
-            margin: EdgeInsets.all(12),
-            child: Padding(
-              padding: EdgeInsets.all(10),
-              child: Row(
-                children: [
-                  // 여기에 이미지 없이 텍스트 정보만 표시
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "전화번호: ${log['phone']}",
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                        SizedBox(height: 8),
-                        Text("위도: ${log['latitude']}", style: TextStyle(fontSize: 16)),
-                        SizedBox(height: 4),
-                        Text("경도: ${log['longitude']}", style: TextStyle(fontSize: 16)),
-                        SizedBox(height: 4),
-                        Text("상태: ${log['state']}"),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class LogDetailPage extends StatelessWidget {
-  final int logId;
-
-  LogDetailPage({required this.logId});
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("로그 상세보기"),
+        title: Text('신고내역'),
       ),
-      body: Center(
-        child: Text("로그 ID: $logId"),
+      body: isLoading
+          ? Center(child: CircularProgressIndicator())
+          : errorMessage.isNotEmpty
+          ? Center(child: Text(errorMessage))
+          : ListView.builder(
+        itemCount: logs.length,
+        itemBuilder: (context, index) {
+          var log = logs[index];
+
+          return Card(
+            margin: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            elevation: 3,
+            child: Padding(
+              padding: const EdgeInsets.all(12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text("신고 번호: ${log['lno']}", style: TextStyle(fontWeight: FontWeight.bold)),
+                  SizedBox(height: 5),
+                  Text("위도: ${log['llat']}"),
+                  Text("경도: ${log['llong']}"),
+                  Text("상태: ${getStatusText(log['lsate'] ?? log['lstate'])}"),
+                  Text("생성일: ${log['create_at']}"),
+                  Text("전화번호: ${log['phone']}"),
+                  if (log['lstate'] == 2) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,  // 버튼들을 양옆에 고르게 배치
+                      children: [
+                        TextButton(onPressed: () => accept(log['lno']), child: Text("수락")),
+                        TextButton(onPressed: () => refuse(log['lno']), child: Text("거절"),
+                        ),
+                      ],
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }
