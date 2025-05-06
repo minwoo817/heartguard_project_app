@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:heartguard_project_app/HeartGuard/board/boardcreate.dart';
 import 'package:heartguard_project_app/HeartGuard/board/boardview.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/myappbar.dart';
 
@@ -15,12 +16,12 @@ class _BoardState extends State<Board> {
   List<dynamic> allBoards = []; // 전체 게시글
   List<dynamic> filteredBoards = []; // 분류한 게시글
   final dio = Dio();
-  String baseUrl = "http://172.30.1.72:8080 ";
+  String baseUrl = "http://172.30.1.78:8080";
   final ScrollController scrollController = ScrollController();
 
   final Map<int, String> categoryMap = {
     1: "공지사항",
-    2: "ＡＥＤ 건의사항",
+    2: "AED 건의사항",
   };
 
   @override
@@ -44,7 +45,16 @@ class _BoardState extends State<Board> {
 
   void applyCategoryFilter() {
     setState(() {
-      filteredBoards = allBoards.where((board) => board['cno'] == cno).toList();
+      filteredBoards = allBoards
+          .where((board) => board['cno'] == cno)
+          .toList();
+
+      // Sort boards by 'createAt' field in descending order (latest first)
+      filteredBoards.sort((a, b) {
+        DateTime dateA = DateTime.parse(a['createAt']);
+        DateTime dateB = DateTime.parse(b['createAt']);
+        return dateB.compareTo(dateA); // For latest first
+      });
     });
   }
 
@@ -53,6 +63,16 @@ class _BoardState extends State<Board> {
       cno = newCno;
       applyCategoryFilter();
     });
+  }
+
+  Future<bool> hasReplies(int bno) async {
+    try {
+      final response = await dio.get("$baseUrl/reply/view", queryParameters: {"bno": bno});
+      return response.data.isNotEmpty;
+    } catch (e) {
+      print("댓글 조회 에러: $e");
+      return false;
+    }
   }
 
   @override
@@ -101,27 +121,61 @@ class _BoardState extends State<Board> {
                       ),
                     );
                   },
-                  child: Column(
-                    children: [
-                      ListTile(
-                        title: Text(
-                          board['btitle'],
-                          style: TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            SizedBox(height: 4),
-                            Text("작성자: ${board['bwriter']}", style: TextStyle(fontSize: 14)),
-                            Text("작성일: ${board['createAt'].split("T")[0]}", style: TextStyle(fontSize: 14)),
-                            Text("조회수: ${board['bview']}", style: TextStyle(fontSize: 14)),
-                          ],
-                        ),
-                        contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        trailing: Icon(Icons.arrow_forward_ios, size: 16),
-                      ),
-                      Divider(height: 1),
-                    ],
+                  child: FutureBuilder<bool>(
+                    future: hasReplies(board['bno']),
+                    builder: (context, snapshot) {
+                      String statusMessage = '';
+
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Container();
+                      }
+                      if (snapshot.hasData && cno == 2) {
+                        if (snapshot.data!) {
+                          statusMessage = "접수완료";
+                        } else {
+                          statusMessage = "접수 대기";
+                        }
+                      }
+
+                      return Column(
+                        children: [
+                          ListTile(
+                            title: Row(
+                              children: [
+                                Text(
+                                  board['btitle'],
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                if (statusMessage.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(left: 8.0),
+                                    child: Text(
+                                      statusMessage,
+                                      style: TextStyle(
+                                        color: statusMessage == "접수완료"
+                                            ? Colors.green
+                                            : Colors.orange,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            subtitle: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(height: 4),
+                                Text("작성자: ${board['bwriter']}", style: TextStyle(fontSize: 14)),
+                                Text("작성일: ${board['createAt'].split("T")[0]}", style: TextStyle(fontSize: 14)),
+                                Text("조회수: ${board['bview']}", style: TextStyle(fontSize: 14)),
+                              ],
+                            ),
+                            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            trailing: Icon(Icons.arrow_forward_ios, size: 16),
+                          ),
+                          Divider(height: 1),
+                        ],
+                      );
+                    },
                   ),
                 );
               },
@@ -129,6 +183,24 @@ class _BoardState extends State<Board> {
           ),
         ],
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          // 글 작성 페이지로 이동
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BoardCreatePage(),
+            ),
+          );
+        },
+        child: Icon(
+          Icons.add,
+          color: Colors.white, // 아이콘 색상은 하얀색으로 설정
+        ),
+        backgroundColor: Color(0xFFFFDAE0), // 배경 색상 핑크로 변경
+      ),
+
+
     );
   }
 }

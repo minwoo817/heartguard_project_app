@@ -1,10 +1,11 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:heartguard_project_app/HeartGuard/layout/myappbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BoardView extends StatefulWidget {
-  int? bno;
-  String? btitle;
+  final int? bno;
+  final String? btitle;
   BoardView({this.bno, this.btitle});
 
   @override
@@ -13,12 +14,17 @@ class BoardView extends StatefulWidget {
 
 class _BoardViewState extends State<BoardView> {
   Map<String, dynamic> board = {};
-  List<dynamic> replies = [];
+  List<dynamic> comments = [];
   final dio = Dio();
-  final baseUrl = "http://172.30.1.72:8080"; //
-  bool isOwner = false;
-  bool isAdmin = false;
-  bool isPublicCategory = false;
+  final baseUrl = "http://172.30.1.78:8080";
+  bool isOwnerOrAdmin = false;
+  bool isLoading = true;
+  bool isAccessible = true;
+  Map<String, dynamic>? userInfo;
+
+  TextEditingController commentController = TextEditingController(
+    text: "민원이 접수되었습니다. 궁금한 점이 있으시면, 해당 기관 담당자 연락처로 문의해주세요.",
+  );
 
   @override
   void initState() {
@@ -26,46 +32,96 @@ class _BoardViewState extends State<BoardView> {
     WidgetsBinding.instance.addPostFrameCallback((_) => onView());
   }
 
-  void onView() async {
+  Future<void> onView() async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("token");
+
+      if (token != null) {
+        dio.options.headers['Authorization'] = token;
+        final userResponse = await dio.get("$baseUrl/user/info");
+
+        if (userResponse.statusCode == 200) {
+          userInfo = userResponse.data;
+        } else {
+          throw Exception('사용자 정보 불러오기 실패');
+        }
+      }
+
       final response = await dio.get("$baseUrl/board/view?bno=${widget.bno}");
 
       if (response.data != null) {
-        setState(() => board = response.data);
+        final boardData = response.data;
 
-        isPublicCategory = board['cno'] == 1;
+        print("userInfo: $userInfo");
+        print("boardData: $boardData");
 
-        final prefs = await SharedPreferences.getInstance();
-        final token = prefs.getString("token");
+        final isAdmin = userInfo != null && userInfo!['ustate'] == 1;
+        final isAuthor = userInfo != null &&
+            userInfo!['uno'].toString() == boardData['uno'].toString();
+        final isPublicCategory = boardData['cno'] == 1;
 
-        if (token != null) {
-          dio.options.headers['Authorization'] = token;
-          final userRes = await dio.get("$baseUrl/user/info");
+        setState(() {
+          board = boardData;
+          isOwnerOrAdmin = isAdmin || isAuthor;
+          isAccessible = isPublicCategory || isOwnerOrAdmin;
+          isLoading = false;
+        });
 
-          final uid = userRes.data['uid'];
-          final role = userRes.data['role'];
 
-          setState(() {
-            isOwner = uid == board['uid'];
-            isAdmin = role == 'admin';
-          });
-
-          if (isOwner || isAdmin) {
-            await loadReplies();
-          }
+        if (isAccessible && boardData['cno'] != 1) {
+          await fetchComments(widget.bno!);
         }
+      } else {
+        setState(() {
+          isAccessible = false;
+          isLoading = false;
+        });
       }
     } catch (e) {
-      print("오류 발생: $e");
+      print("오류: $e");
+      setState(() {
+        isAccessible = false;
+        isLoading = false;
+      });
     }
   }
 
-  Future<void> loadReplies() async {
+  Future<void> fetchComments(int bno) async {
     try {
-      final res = await dio.get("$baseUrl/reply/list?bno=${widget.bno}");
-      setState(() => replies = res.data);
+      final response = await dio.get("$baseUrl/reply/view?bno=$bno");
+      setState(() {
+        comments = response.data ?? [];
+      });
     } catch (e) {
-      print("댓글 로딩 오류: $e");
+      print("댓글 불러오기 오류: $e");
+      setState(() {
+        comments = [];
+      });
+    }
+  }
+
+  Future<void> submitComment() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString("token");
+      if (token == null || commentController.text.trim().isEmpty) return;
+
+      dio.options.headers['Authorization'] = token;
+
+      await dio.post(
+        "$baseUrl/reply/post",
+        data: {
+          "bno": widget.bno,
+          "rcontent": commentController.text.trim(),
+        },
+      );
+
+      commentController.clear();
+      commentController.text = "민원이 접수되었습니다. 궁금한 점이 있으시면, 해당 기관 담당자 연락처로 문의해주세요.";
+      await fetchComments(widget.bno!);
+    } catch (e) {
+      print("댓글 등록 오류: $e");
     }
   }
 
@@ -79,7 +135,6 @@ class _BoardViewState extends State<BoardView> {
       final response = await dio.delete('$baseUrl/board/delete?bno=$bno');
 
       if (response.data == true) {
-        print("삭제 성공");
         Navigator.pop(context);
       }
     } catch (e) {
@@ -89,117 +144,125 @@ class _BoardViewState extends State<BoardView> {
 
   @override
   Widget build(BuildContext context) {
-    if (!isPublicCategory && !isOwner && !isAdmin) {
+    if (isLoading) {
       return Scaffold(
-        appBar: AppBar(title: Text("접근 제한")),
-        body: Center(child: Text("이 게시글을 볼 수 있는 권한이 없습니다.")),
+        appBar: MyAppBar(),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
-    if (board.isEmpty) {
+    if (!isAccessible) {
       return Scaffold(
-        appBar: AppBar(title: Text("게시글 상세")),
-        body: Center(child: CircularProgressIndicator()),
+        appBar: MyAppBar(),
+        body: Center(child: Text("이 게시글을 볼 수 있는 권한이 없습니다.")),
       );
     }
 
     final List<dynamic> images = board['images'] ?? [];
 
     return Scaffold(
-      appBar: AppBar(title: Text("게시글 상세")),
+      appBar:  MyAppBar(),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(15),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // 게시글 내용
+            Card(
+              elevation: 3,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(board['btitle'] ?? "",
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                    SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text("작성자: ${board['bwriter']}"),
+                        Text("조회수: ${board['bview']}"),
+                      ],
+                    ),
+                    SizedBox(height: 10),
+                    Divider(),
+                    Text(board['bcontent'] ?? "", style: TextStyle(fontSize: 16)),
+                    SizedBox(height: 20),
+                    if (isOwnerOrAdmin)
+                      Row(
+                        children: [
+                          ElevatedButton(onPressed: () {}, child: Text("수정")),
+                          SizedBox(width: 8),
+                          ElevatedButton(
+                              onPressed: () => onDelete(board['bno']),
+                              child: Text("삭제")),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 30),
+
+            // 게시글 이미지
             if (images.isNotEmpty)
-              Container(
-                height: 300,
+              SizedBox(
+                height: 250,
                 child: ListView.builder(
                   scrollDirection: Axis.horizontal,
                   itemCount: images.length,
                   itemBuilder: (context, index) {
                     String imageUrl = "$baseUrl/upload/${images[index]}";
                     return Padding(
-                      padding: EdgeInsets.all(5),
-                      child: Image.network(imageUrl, fit: BoxFit.cover),
+                      padding: EdgeInsets.only(right: 10),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(imageUrl, fit: BoxFit.cover),
+                      ),
                     );
                   },
                 ),
               ),
-
-            if (images.isNotEmpty) SizedBox(height: 24),
-
-            Text(
-              board['btitle'],
-              style: TextStyle(fontSize: 25, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 10),
-            Divider(),
-            SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text("카테고리: ${board['cname']}"),
-                Text("조회수: ${board['bview']}"),
-              ],
-            ),
-            SizedBox(height: 10),
-            Text("작성자: ${board['bwriter']}"),
             SizedBox(height: 20),
-            Text("게시글 내용", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-            Text(board['bcontent']),
-            SizedBox(height: 16),
 
-            if (isOwner || isAdmin)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("댓글", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  SizedBox(height: 10),
-                  ...replies.map((reply) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: Text("${reply['rwriter']}: ${reply['rcontent']}"),
-                  )),
-                  if (isAdmin)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: TextField(
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: "댓글 작성",
-                        ),
-                        onSubmitted: (text) async {
-                          try {
-                            final prefs = await SharedPreferences.getInstance();
-                            final token = prefs.getString("token");
-                            if (token == null) return;
-                            dio.options.headers['Authorization'] = token;
-
-                            await dio.post("$baseUrl/reply/write",
-                                data: {"bno": board['bno'], "rcontent": text});
-
-                            await loadReplies();
-                          } catch (e) {
-                            print("댓글 작성 오류: $e");
-                          }
-                        },
-                      ),
-                    )
-                ],
+            // 댓글 작성 부분
+            if (board['cno'] != 1 && userInfo != null && userInfo!['ustate'] == 1) ...[
+              Text("댓글 작성", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              SizedBox(height: 12),
+              TextField(
+                controller: commentController,
+                decoration: InputDecoration(
+                  hintText: "댓글을 입력하세요",
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                maxLines: 2,
               ),
+              SizedBox(height: 8),
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  onPressed: submitComment,
+                  child: Text("댓글 등록"),
+                ),
+              ),
+              SizedBox(height: 30),
+            ],
 
-            if (isOwner)
-              Row(
-                children: [
-                  ElevatedButton(onPressed: () {}, child: Text("수정")),
-                  SizedBox(width: 8),
-                  ElevatedButton(
-                      onPressed: () => onDelete(board['bno']),
-                      child: Text("삭제")),
-                ],
-              )
+            // 댓글 목록
+            if (board['cno'] != 1) ...[
+              SizedBox(height: 12),
+              if (comments.isEmpty)
+                Text("댓글이 없습니다."),
+              ...comments.map((comment) => Card(
+                margin: EdgeInsets.only(bottom: 10),
+                child: ListTile(
+                  title: Text(comment['rcontent']),
+                  subtitle: Text("작성자: ${comment['uname']}"),
+                ),
+              )),
+            ],
           ],
         ),
       ),
