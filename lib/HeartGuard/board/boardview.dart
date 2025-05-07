@@ -16,7 +16,7 @@ class _BoardViewState extends State<BoardView> {
   Map<String, dynamic> board = {};
   List<dynamic> comments = [];
   final dio = Dio();
-  final baseUrl = "http://172.30.1.78:8080";
+  final baseUrl = "http://192.168.40.13:8080";
   bool isOwnerOrAdmin = false;
   bool isLoading = true;
   bool isAccessible = true;
@@ -53,9 +53,6 @@ class _BoardViewState extends State<BoardView> {
       if (response.data != null) {
         final boardData = response.data;
 
-        print("userInfo: $userInfo");
-        print("boardData: $boardData");
-
         final isAdmin = userInfo != null && userInfo!['ustate'] == 1;
         final isAuthor = userInfo != null &&
             userInfo!['uno'].toString() == boardData['uno'].toString();
@@ -67,7 +64,6 @@ class _BoardViewState extends State<BoardView> {
           isAccessible = isPublicCategory || isOwnerOrAdmin;
           isLoading = false;
         });
-
 
         if (isAccessible && boardData['cno'] != 1) {
           await fetchComments(widget.bno!);
@@ -161,53 +157,48 @@ class _BoardViewState extends State<BoardView> {
     final List<dynamic> images = board['images'] ?? [];
 
     return Scaffold(
-      appBar:  MyAppBar(),
+      appBar: MyAppBar(),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 게시글 내용
-            Card(
-              elevation: 3,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(board['btitle'] ?? "",
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text("작성자: ${board['bwriter']}"),
-                        Text("조회수: ${board['bview']}"),
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    Divider(),
-                    Text(board['bcontent'] ?? "", style: TextStyle(fontSize: 16)),
-                    SizedBox(height: 20),
-                    if (isOwnerOrAdmin)
-                      Row(
-                        children: [
-                          ElevatedButton(onPressed: () {}, child: Text("수정")),
-                          SizedBox(width: 8),
-                          ElevatedButton(
-                              onPressed: () => onDelete(board['bno']),
-                              child: Text("삭제")),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
+            // 게시글 제목 및 정보
+            Text(
+              board['btitle'] ?? "",
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
-            SizedBox(height: 30),
+            SizedBox(height: 10),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("작성자: ${board['bwriter']}"),
+                Text("조회수: ${board['bview']}"),
+              ],
+            ),
+            SizedBox(height: 10),
+            Divider(),
 
-            // 게시글 이미지
-            if (images.isNotEmpty)
+            // 게시글 본문
+            Text(board['bcontent'] ?? "", style: TextStyle(fontSize: 16)),
+            SizedBox(height: 20),
+
+            // 수정/삭제 버튼
+            if (isOwnerOrAdmin)
+              Row(
+                children: [
+                  ElevatedButton(onPressed: () {}, child: Text("수정")),
+                  SizedBox(width: 8),
+                  ElevatedButton(
+                      onPressed: () => onDelete(board['bno']),
+                      child: Text("삭제")),
+                ],
+              ),
+            SizedBox(height: 20),
+            Divider(),
+
+            // 이미지 영역 (카테고리가 1일 때)
+            if (board['cno'] == 1 && images.isNotEmpty)
               SizedBox(
                 height: 250,
                 child: ListView.builder(
@@ -225,11 +216,12 @@ class _BoardViewState extends State<BoardView> {
                   },
                 ),
               ),
-            SizedBox(height: 20),
+            if (images.isNotEmpty) Divider(),
 
-            // 댓글 작성 부분
+            // 댓글 작성
             if (board['cno'] != 1 && userInfo != null && userInfo!['ustate'] == 1) ...[
-              Text("댓글 작성", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              SizedBox(height: 20),
+              Text("댓글", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               SizedBox(height: 12),
               TextField(
                 controller: commentController,
@@ -247,9 +239,9 @@ class _BoardViewState extends State<BoardView> {
                   child: Text("댓글 등록"),
                 ),
               ),
-              SizedBox(height: 30),
             ],
 
+            // 댓글 목록
             // 댓글 목록
             if (board['cno'] != 1) ...[
               SizedBox(height: 12),
