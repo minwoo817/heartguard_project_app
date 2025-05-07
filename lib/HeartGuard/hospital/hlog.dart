@@ -1,29 +1,14 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:heartguard_project_app/HeartGuard/layout/myappbar.dart'; // MyAppBar import
 
-void main() {
-  runApp(Hlog());
-}
-
-class Hlog extends StatelessWidget {
+class Hlog extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'HeartGuard',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: LogList(),
-    );
-  }
+  _HlogState createState() => _HlogState();
 }
 
-class LogList extends StatefulWidget {
-  @override
-  _LogListState createState() => _LogListState();
-}
-
-class _LogListState extends State<LogList> {
+class _HlogState extends State<Hlog> {
   List<dynamic> logs = [];
   bool isLoading = true;
   String errorMessage = '';
@@ -36,21 +21,21 @@ class _LogListState extends State<LogList> {
 
   Future<void> fetchLogs() async {
     final dio = Dio();
-    final token = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJob3NwaXRhbDEiLCJpYXQiOjE3NDYxNjQ5MjksImV4cCI6MTc0NjI1MTMyOX0.E8PgiPAr823twwyVh39grbOGGot0wJYuKrF0ibAtKk4";
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
 
     try {
       final response = await dio.get(
         'http://192.168.40.40:8080/log/view',
         options: Options(
-          headers: {
-            'Authorization': 'Bearer $token',
-          },
+          headers: {'Authorization': 'Bearer $token'},
         ),
       );
 
       if (response.statusCode == 200) {
         setState(() {
           logs = response.data;
+          logs.sort((a, b) => b['lno'].compareTo(a['lno']));
           isLoading = false;
         });
       } else {
@@ -80,26 +65,37 @@ class _LogListState extends State<LogList> {
     }
   }
 
-  void accept(int lno) async{
+  Color getStatusColor(dynamic state) {
+    switch (state.toString()) {
+      case '0':
+        return Colors.red; // 거절은 빨간색
+      case '1':
+        return Colors.green; // 수락은 초록색
+      case '2':
+        return Colors.orange; // 대기중은 주황색
+      default:
+        return Colors.black; // 기본 색상 (에러나 다른 상태에 대비)
+    }
+  }
+
+  void accept(int lno) async {
     final dio = Dio();
-    try{
+    try {
       final response = await dio.post(
         'http://192.168.40.40:8080/log/state',
         data: {
-          "lno" : lno,
-          "lstate" : 1,
+          "lno": lno,
+          "lstate": 1,
         },
       );
-      if(response.statusCode == 200) {
+      if (response.statusCode == 200) {
         fetchLogs();
       }
-    }catch(e) {
+    } catch (e) {
       print(e);
     }
-    print("수락 버튼이 눌렸습니다.");
   }
 
-  // 거절 버튼을 누를 때 해당 lno와 lstate만 보내기
   void refuse(int lno) async {
     final dio = Dio();
     try {
@@ -107,11 +103,11 @@ class _LogListState extends State<LogList> {
         'http://192.168.40.40:8080/log/state',
         data: {
           "lno": lno,
-          "lstate": 0, // 거절 상태
+          "lstate": 0,
         },
       );
       if (response.statusCode == 200) {
-        fetchLogs();  // 데이터 새로고침
+        fetchLogs();
       }
     } catch (e) {
       print(e);
@@ -121,39 +117,93 @@ class _LogListState extends State<LogList> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('신고내역'),
-      ),
+      appBar: MyAppBar(), // MyAppBar 사용
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : errorMessage.isNotEmpty
-          ? Center(child: Text(errorMessage))
+          ? Center(child: Text(errorMessage, style: TextStyle(color: Colors.red)))
           : ListView.builder(
         itemCount: logs.length,
         itemBuilder: (context, index) {
           var log = logs[index];
-
           return Card(
             margin: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            elevation: 3,
+            elevation: 5,
+            color: Colors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
             child: Padding(
-              padding: const EdgeInsets.all(12.0),
+              padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("신고 번호: ${log['lno']}", style: TextStyle(fontWeight: FontWeight.bold)),
-                  SizedBox(height: 5),
-                  Text("위도: ${log['llat']}"),
-                  Text("경도: ${log['llong']}"),
-                  Text("상태: ${getStatusText(log['lsate'] ?? log['lstate'])}"),
-                  Text("생성일: ${log['create_at']}"),
-                  Text("전화번호: ${log['phone']}"),
+                  Text("신고 번호: ${log['lno']}",
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black)),
+                  SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.location_on, color: Colors.blue),
+                      SizedBox(width: 6),
+                      Text("위도: ${log['llat']}, 경도: ${log['llong']}",
+                          style: TextStyle(fontSize: 14, color: Colors.black54)),
+                    ],
+                  ),
+                  SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.calendar_today, color: Colors.orange),
+                      SizedBox(width: 6),
+                      Text("생성일: ${log['create_at']}",
+                          style: TextStyle(fontSize: 14, color: Colors.black54)),
+                    ],
+                  ),
+                  SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.phone, color: Colors.green),
+                      SizedBox(width: 6),
+                      Text("전화번호: ${log['phone']}",
+                          style: TextStyle(fontSize: 14, color: Colors.black54)),
+                    ],
+                  ),
+                  // 상태 항목을 제일 마지막으로 이동
+                  SizedBox(height: 10),
+                  Text(
+                    "상태: ${getStatusText(log['lsate'] ?? log['lstate'])}",
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: getStatusColor(log['lsate'] ?? log['lstate']),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  SizedBox(height: 6),
                   if (log['lstate'] == 2) ...[
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,  // 버튼들을 양옆에 고르게 배치
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        TextButton(onPressed: () => accept(log['lno']), child: Text("수락")),
-                        TextButton(onPressed: () => refuse(log['lno']), child: Text("거절"),
+                        // 수락 버튼
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.green,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: TextButton(
+                            onPressed: () => accept(log['lno']),
+                            child: Text("수락", style: TextStyle(color: Colors.white)),
+                          ),
+                        ),
+                        SizedBox(width: 10),
+                        // 거절 버튼
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: TextButton(
+                            onPressed: () => refuse(log['lno']),
+                            child: Text("거절", style: TextStyle(color: Colors.white)),
+                          ),
                         ),
                       ],
                     ),

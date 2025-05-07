@@ -1,6 +1,7 @@
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:heartguard_project_app/HeartGuard/hospital/hlog.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/home.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/myappbar.dart';
 import 'package:heartguard_project_app/HeartGuard/user/login.dart';
@@ -20,14 +21,14 @@ class _HloginState extends State<Hlogin>{
     try{
       Dio dio = Dio();
       final sendData ={'hid': hidControl.text, 'hpwd': hpwdControl.text};
-      final response = await dio.post("http://192.168.40.37:8080/hospital/login", data: sendData);
+      final response = await dio.post("http://192.168.40.40:8080/hospital/login", data: sendData);
       final data= response.data;
       if(data != ''){
         final prefs =await SharedPreferences.getInstance();
         await prefs.setString('token', data);
         Navigator.pushReplacement(
           context ,
-          MaterialPageRoute(builder: (context)=>Home() ), // 병원 페이지 연동 Home X
+          MaterialPageRoute(builder: (context)=> Hlog() ), // 병원 페이지 연동 Home X
         );
       }else{
         print("로그인 실패하였습니다.");

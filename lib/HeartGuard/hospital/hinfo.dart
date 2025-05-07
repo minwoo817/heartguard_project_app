@@ -44,7 +44,7 @@ class _HinfoState extends State<Hinfo>{
       // 방법1 : dio.options.headers['속성명'] = 값;
       // 방법2 : dio.get( options : { headers : { '속성명' : 값 } } )
       dio.options.headers['Authorization'] = token;
-      final response = await dio.get( "http://192.168.40.37:8080/hospital/info" );
+      final response = await dio.get( "http://192.168.40.40:8080/hospital/info" );
       final data = response.data; print( data );
       if( data != '' ) {
         setState(() {
