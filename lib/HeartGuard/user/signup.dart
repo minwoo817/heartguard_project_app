@@ -17,41 +17,66 @@ class _SignupState extends State<Signup>{
   TextEditingController unameControl = TextEditingController();
   TextEditingController uphoneControl = TextEditingController();
 
-  void onSignup() async{
+  void onSignup() async {
+    final uid = uidControl.text.trim().toLowerCase(); // 소문자로 비교
+    if (uid.contains("admin") || uid.contains("hospital")) {
+      Fluttertoast.showToast(
+        msg: "아이디에 'admin' 또는 'hospital'이 포함될 수 없습니다.",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16,
+      );
+      return; // 회원가입 진행 중단
+    }
+
     final sendData = {
       'uid': uidControl.text,
       'upwd': upwdControl.text,
       'uname': unameControl.text,
       'uphone': uphoneControl.text
-    }; print(sendData);
+    };
+
     showDialog(
       context: context,
-      builder: (context) => Center( child: CircularProgressIndicator() ,),
+      builder: (context) => Center(child: CircularProgressIndicator()),
       barrierDismissible: false,
     );
-    try{
+
+    try {
       Dio dio = Dio();
       final response = await dio.post("http://192.168.40.37:8080/user/signup", data: sendData);
       final data = response.data;
 
       Navigator.pop(context);
-      if(data){
-        print("회원가입 성공하였습니다.");
+      if (data) {
         Fluttertoast.showToast(
-          msg: "회원가입을 성공했습니다.", // 출력할내용
-          toastLength : Toast.LENGTH_LONG , // 메시지 유지시간
-          gravity : ToastGravity.BOTTOM, // 메시지 위치 : 앱 적용
-          timeInSecForIosWeb: 3 , // 자세한 유지시간 (sec)
-          backgroundColor: Colors.black, // 배경색
-          textColor: Colors.white, // 글자색상
-          fontSize : 16, // 글자크기
+          msg: "회원가입을 성공했습니다.",
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          backgroundColor: Colors.black,
+          textColor: Colors.white,
+          fontSize: 16,
         );
-        Navigator.pushReplacement(context,  MaterialPageRoute(builder:  (context)=>Login() ) );
-      }else{
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Login()));
+      } else {
         print("회원가입 실패하였습니다.");
       }
-    }catch(e){print(e);}
+    } catch (e) {
+      Navigator.pop(context); // 에러 시에도 로딩창 제거
+      print("에러: $e");
+      Fluttertoast.showToast(
+        msg: "회원가입 중 오류가 발생했습니다.",
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16,
+      );
+    }
   }
+
 
   @override
   Widget build(BuildContext context) {

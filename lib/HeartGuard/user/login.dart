@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:heartguard_project_app/HeartGuard/hospital/hlogin.dart';
+import 'package:heartguard_project_app/HeartGuard/layout/adminhome.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/home.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/myappbar.dart';
 import 'package:heartguard_project_app/HeartGuard/user/signup.dart';
@@ -17,20 +18,29 @@ class _LoginState extends State<Login>{
   // 1. 입력상자 컨트롤러
   TextEditingController uidControl = TextEditingController();
   TextEditingController upwdControl = TextEditingController();
-  void onLogin() async{
-    try{
-      Dio dio =Dio();
+  void onLogin() async {
+    try {
+      Dio dio = Dio();
       final sendData = {"uid": uidControl.text, "upwd": upwdControl.text};
-      final response = await dio.post("http://192.168.40.13:8080/user/login", data: sendData);
+      final response = await dio.post("http://192.168.40.37:8080/user/login", data: sendData);
       final data = response.data;
-      if(data != ''){
+
+      if (data != '') {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', data);
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>Home()),);
-      }else{
+
+        // 아이디가 'admin'이면 관리자 페이지로 이동
+        if (uidControl.text == 'admin') {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => AdminHome()));
+        } else {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Home()));
+        }
+      } else {
         print("로그인 실패하였습니다.");
       }
-    }catch(e){print(e);}
+    } catch (e) {
+      print(e);
+    }
   }
   @override
   Widget build(BuildContext context) {

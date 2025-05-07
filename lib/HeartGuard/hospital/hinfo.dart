@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:heartguard_project_app/HeartGuard/hospital/hlogin.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/home.dart';
+import 'package:heartguard_project_app/HeartGuard/layout/hospitalmyappbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Hinfo extends StatefulWidget{
@@ -79,6 +80,7 @@ class _HinfoState extends State<Hinfo>{
       );
     }
     return Scaffold(
+      appBar: HospitalMyAppbar(),
       body: Container(
         margin: EdgeInsets.all( 60 ),
         padding: EdgeInsets.all( 60 ),

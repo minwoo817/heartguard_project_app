@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:heartguard_project_app/HeartGuard/layout/adminappbar.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/myappbar.dart';
+import 'package:heartguard_project_app/HeartGuard/layout/usermanagepage.dart';
 
 class AdminHome extends StatefulWidget{
   @override
@@ -12,7 +14,7 @@ class _AdminHomeState extends State<AdminHome>{
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppBar(),
+      appBar: AdminAppBar(),
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
@@ -30,7 +32,10 @@ class _AdminHomeState extends State<AdminHome>{
                           child: SizedBox(
                             height: 80,
                             child: TextButton(
-                              onPressed: () => Navigator.pushNamed(context, "/"),
+                              onPressed: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => UserManagePage()),
+                              ),
                               style: TextButton.styleFrom(
                                 backgroundColor: Colors.grey,
                                 foregroundColor: Colors.black,

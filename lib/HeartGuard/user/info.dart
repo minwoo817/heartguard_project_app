@@ -3,9 +3,12 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/home.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/myappbar.dart';
+import 'package:heartguard_project_app/HeartGuard/user/delete.dart';
 import 'package:heartguard_project_app/HeartGuard/user/login.dart';
+import 'package:heartguard_project_app/HeartGuard/user/update.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:heartguard_project_app/HeartGuard/user/update.dart';
+import 'package:heartguard_project_app/HeartGuard/user/delete.dart';
 class Info extends StatefulWidget{
   @override
   State<StatefulWidget> createState() {
@@ -20,77 +23,108 @@ class _InfoState extends State<Info>{
   String uphone = "";
 
   @override
-  void initState() {loginCheck();}
+  void initState() {
+    loginCheck();
+  }
 
   bool? isLogin;
-  void loginCheck() async{
+
+  void loginCheck() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
-    if( token != null && token.isNotEmpty ){
+    if (token != null && token.isNotEmpty) {
       setState(() {
-        isLogin = true; print("로그인 중입니다.");
-        onInfo( token );
+        isLogin = true;
+        print("로그인 중입니다.");
+        onInfo(token);
       });
-    }else{
-      Navigator.pushReplacement( context , MaterialPageRoute(builder: (context) => Login() ) );
+    } else {
+      Navigator.pushReplacement(
+          context, MaterialPageRoute(builder: (context) => Login()));
     }
   }
 
-  void onInfo(token) async{
-    try{
+  void onInfo(token) async {
+    try {
       Dio dio = Dio();
       dio.options.headers['Authorization'] = token;
-      final response = await dio.get( "http://192.168.40.37:8080/user/info" );
-      final data = response.data; print( data );
-      if(data != ''){
+      final response = await dio.get("http://192.168.40.37:8080/user/info");
+      final data = response.data;
+      print(data);
+      if (data != '') {
         setState(() {
           uid = data['uid'];
           uname = data['uname'];
           uphone = data['uphone'];
           uno = data['uno'];
         });
-
       }
-    }catch(e){print(e);}
+    } catch (e) {
+      print(e);
+    }
   }
 
-  void logout() async{
-    final prefs =  await SharedPreferences.getInstance();
+  void logout() async {
+    final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
-    if( token == null  ) return;
+    if (token == null) return;
     Dio dio = Dio();
     dio.options.headers['Authorization'] = token;
-    final response = dio.get("http://192.168.40.37:8080/user/logout");
+    await dio.get("http://192.168.40.37:8080/user/logout");
     await prefs.remove('token');
-    Navigator.pushReplacement( context , MaterialPageRoute( builder: (context)=> Home() ));
+    Navigator.pushReplacement(
+        context, MaterialPageRoute(builder: (context) => Home()));
   }
 
   @override
   Widget build(BuildContext context) {
-    if(isLogin==null){
+    if (isLogin == null) {
       return Scaffold(
         appBar: MyAppBar(),
-        body: Center(child: CircularProgressIndicator(),),
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
       );
     }
     return Scaffold(
       appBar: MyAppBar(),
       body: Container(
-        margin: EdgeInsets.all( 60 ),
-        padding: EdgeInsets.all( 60 ),
+        margin: EdgeInsets.all(60),
+        padding: EdgeInsets.all(60),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text("회원번호 : $uno" ),
-            SizedBox( height: 20,),
+            Text("회원번호 : $uno"),
+            SizedBox(height: 20),
             Text("아이디 : $uid  "),
-            SizedBox( height: 20,),
+            SizedBox(height: 20),
             Text("이름(닉네임) : $uname"),
-            SizedBox( height: 20,),
+            SizedBox(height: 20),
             Text("전화번호 : $uphone"),
-            SizedBox( height: 20,),
-            ElevatedButton(onPressed: logout , child: Text("로그아웃") ),
+            SizedBox(height: 30),
+            ElevatedButton(onPressed: logout, child: Text("로그아웃")),
+            SizedBox(height: 20),
+            if (uid != 'admin') ...[
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                      context, MaterialPageRoute(builder: (context) => UserUpdate()));
+                },
+                child: Text("회원정보 수정"),
+              ),
+              SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                      context, MaterialPageRoute(builder: (context) => UserDelete()));
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                ),
+                child: Text("회원 탈퇴"),
+              ),
+            ],
           ],
         ),
       ),
