@@ -66,7 +66,7 @@ class _HinfoState extends State<Hinfo>{
     if( token == null  ) return;
     Dio dio = Dio();
     dio.options.headers['Authorization'] = token;
-    final response = dio.get("http://192.168.40.37:8080/user/logout");
+    final response = dio.get("http://192.168.40.40:8080/user/logout");
     await prefs.remove('token');
     Navigator.pushReplacement( context , MaterialPageRoute( builder: (context)=> Home() ));
   }

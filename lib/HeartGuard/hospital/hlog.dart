@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:heartguard_project_app/HeartGuard/layout/hospitalmyappbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:heartguard_project_app/HeartGuard/layout/myappbar.dart'; // MyAppBar import
 
 class Hlog extends StatefulWidget {
   @override
@@ -68,13 +68,13 @@ class _HlogState extends State<Hlog> {
   Color getStatusColor(dynamic state) {
     switch (state.toString()) {
       case '0':
-        return Colors.red; // 거절은 빨간색
+        return Colors.red;
       case '1':
-        return Colors.green; // 수락은 초록색
+        return Colors.green;
       case '2':
-        return Colors.orange; // 대기중은 주황색
+        return Colors.orange;
       default:
-        return Colors.black; // 기본 색상 (에러나 다른 상태에 대비)
+        return Colors.black;
     }
   }
 
@@ -117,7 +117,7 @@ class _HlogState extends State<Hlog> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppBar(), // MyAppBar 사용
+      appBar: HospitalMyAppbar(), // MyAppBar 사용
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : errorMessage.isNotEmpty
