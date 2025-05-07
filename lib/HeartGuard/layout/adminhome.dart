@@ -21,9 +21,9 @@ class _AdminHomeState extends State<AdminHome>{
             child: ConstrainedBox(
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 70.0, horizontal: 45.0),
+                padding: const EdgeInsets.symmetric(horizontal: 45.0),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     // CPR, AED 가이드 / AED 설치 제안
                     Row(
@@ -77,7 +77,7 @@ class _AdminHomeState extends State<AdminHome>{
                       ],
                     ),
 
-
+                    SizedBox(height: 16),
 
                     // CPR, AED 가이드 / AED 설치 제안
                     Row(
@@ -94,7 +94,8 @@ class _AdminHomeState extends State<AdminHome>{
                                     borderRadius: BorderRadius.circular(8)
                                 ),
                               ),
-                              child: Text("CPR, AED 가이드 글쓰기",
+                              child: Text("CPR, AED 가이드\n글쓰기",
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w600,
@@ -116,7 +117,8 @@ class _AdminHomeState extends State<AdminHome>{
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                               ),
-                              child: Text("AED 설치 제안     답변하기",
+                              child: Text("AED 설치 제안\n답변하기",
+                                textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 17,
                                   fontWeight: FontWeight.w600,
@@ -129,7 +131,7 @@ class _AdminHomeState extends State<AdminHome>{
                     ),
 
 
-                    
+
                   ],
                 ),
               ),

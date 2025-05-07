@@ -19,20 +19,27 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: Color(0xFFFFDAE0),
       leadingWidth: 70,
 
-      // 왼쪽 로고
-      leading: Padding(
-        padding: EdgeInsets.all(8.0),
-        child: GestureDetector(
-          onTap: () => {
-            Navigator.pushNamed(context, "/")
-          },
-          child: Image.asset(
-            'assets/images/logo1.png',
-            width: 70,
-            fit: BoxFit.contain,
+        // 왼쪽 로고
+        leading: Padding(
+          padding: EdgeInsets.all(8.0),
+          child: GestureDetector(
+            onTap: () async {
+              final prefs = await SharedPreferences.getInstance();
+              final uid = prefs.getString('uid');
+
+              if (uid == 'admin') {
+                Navigator.pushNamed(context, '/adminhome');
+              } else {
+                Navigator.pushNamed(context, '/');
+              }
+            },
+            child: Image.asset(
+              'assets/images/logo1.png',
+              width: 70,
+              fit: BoxFit.contain,
+            ),
           ),
         ),
-      ),
 
       // 오른쪽 아이콘
         actions: [
