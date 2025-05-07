@@ -189,7 +189,7 @@ class _BoardViewState extends State<BoardView> {
             SizedBox(height: 10),
             Divider(),
 
-            // 이미지 영역 (카테고리가 1일 때)
+
             // 이미지 영역 (카테고리가 1일 때)
             if (board['cno'] == 1 && images.isNotEmpty) ...[
               SizedBox(height: 15), // 위 margin
