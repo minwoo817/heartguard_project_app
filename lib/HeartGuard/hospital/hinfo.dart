@@ -56,6 +56,7 @@ class _HinfoState extends State<Hinfo>{
           tel = data['tel'];
           emgTel = data['emgTel'];
           address = data['address'];
+          hno = data['hno'];
         });
       }
     }catch(e){ print(e); }
@@ -67,7 +68,7 @@ class _HinfoState extends State<Hinfo>{
     if( token == null  ) return;
     Dio dio = Dio();
     dio.options.headers['Authorization'] = token;
-    final response = dio.get("http://192.168.40.40:8080/user/logout");
+    final response = dio.get("http://192.168.40.40:8080/hospital/logout");
     await prefs.remove('token');
     Navigator.pushReplacement( context , MaterialPageRoute( builder: (context)=> Home() ));
   }
