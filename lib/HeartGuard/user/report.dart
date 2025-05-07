@@ -1,21 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:get_phone_number/get_phone_number.dart';
+import 'package:intl/intl.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/myappbar.dart';
-import 'package:intl/intl.dart'; // DateFormat을 사용하기 위한 import
-
 
 class Report extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: SubmitPage(),
-      theme: ThemeData(
-        primarySwatch: Colors.red,
-        fontFamily: 'Roboto',
-      ),
-    );
+    return SubmitPage();
   }
 }
 
@@ -26,7 +18,7 @@ class SubmitPage extends StatefulWidget {
 
 class _SubmitPageState extends State<SubmitPage> {
   String? phone;
-  double llat = 12.34;
+  double llat = 12.34;  // 실제 위치 서비스 적용 가능
   double llong = 56.78;
   String? reportTime;
   String resultMessage = "전송 중...";
@@ -35,8 +27,6 @@ class _SubmitPageState extends State<SubmitPage> {
   Future<void> submitReport() async {
     try {
       phone = await GetPhoneNumber().get();
-
-      // 초 단위를 제외하고 포맷팅
       reportTime = DateFormat("yyyy-MM-dd HH:mm:ss").format(DateTime.now());
 
       final sendData = {
