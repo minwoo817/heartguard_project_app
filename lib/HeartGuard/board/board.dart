@@ -16,7 +16,7 @@ class _BoardState extends State<Board> {
   List<dynamic> allBoards = []; // 전체 게시글
   List<dynamic> filteredBoards = []; // 분류한 게시글
   final dio = Dio();
-  String baseUrl = "http://172.30.1.78:8080";
+  String baseUrl = "http://192.168.40.13:8080";
   final ScrollController scrollController = ScrollController();
 
   final Map<int, String> categoryMap = {
