@@ -124,7 +124,11 @@ class _HomeState extends State<Home>{
                           child: SizedBox(
                             height: 80,
                             child: TextButton(
-                              onPressed: () => Navigator.pushNamed(context, "/board"),
+                              onPressed: () => Navigator.pushNamed(
+                                context,
+                                "/board",
+                                arguments: {"category": 1}, // 1 = CPR, AED 가이드 (공지사항)
+                              ),
                               style: TextButton.styleFrom(
                                 backgroundColor: Colors.black,
                                 foregroundColor: Colors.white,
@@ -146,7 +150,11 @@ class _HomeState extends State<Home>{
                           child: SizedBox(
                             height: 80,
                             child: TextButton(
-                              onPressed: () => Navigator.pushNamed(context, "/board"),
+                              onPressed: () => Navigator.pushNamed(
+                                context,
+                                "/board",
+                                arguments: {"category": 2}, // 2 = AED 설치 제안
+                              ),
                               style: TextButton.styleFrom(
                                 backgroundColor: Colors.black,
                                 foregroundColor: Colors.white,
