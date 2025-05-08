@@ -6,8 +6,16 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
 
-  void getUid(String token, BuildContext context) async {
+  void getUid(BuildContext context) async {
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token') ?? '';
+
+      if (token.isEmpty) {
+        Navigator.pushNamed(context, '/');
+        return;
+      }
+
       Dio dio = Dio();
       dio.options.headers['Authorization'] = token;
 
@@ -20,7 +28,7 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
         Navigator.pushNamed(context, '/');
       }
     } catch (e) {
-      print(e);
+      print('토큰 오류 또는 네트워크 에러: $e');
       Navigator.pushNamed(context, '/');
     }
   }
@@ -40,28 +48,19 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
 
       backgroundColor: Color(0xFFFFDAE0),
       leadingWidth: 70,
-      
-      // 왼쪽 로고
-      leading: Padding(
-        padding: EdgeInsets.all(8.0),
-        child: GestureDetector(
-          onTap: () async {
-            final prefs = await SharedPreferences.getInstance();
-            final token = prefs.getString('token') ?? '';
 
-            if (token.isNotEmpty) {
-              getUid(token, context);
-            } else {
-              Navigator.pushNamed(context, '/');
-            }
-          },
-          child: Image.asset(
-            'assets/images/logo1.png',
-            width: 70,
-            fit: BoxFit.contain,
+        // 왼쪽 로고
+        leading: Padding(
+          padding: EdgeInsets.all(8.0),
+          child: GestureDetector(
+            onTap: () => getUid(context),
+            child: Image.asset(
+              'assets/images/logo1.png',
+              width: 70,
+              fit: BoxFit.contain,
+            ),
           ),
         ),
-      ),
 
       // 오른쪽 아이콘
         actions: [

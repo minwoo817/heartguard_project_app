@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_naver_map/flutter_naver_map.dart';
 import 'package:geolocator/geolocator.dart';
@@ -13,12 +14,16 @@ class _MapViewState extends State<MapView> {
   late NaverMapController _mapController;
   NLatLng? _currentPosition; // GPS 위치
   NMarker? _currentMarker; // GPS 위치 마커
+  final dio = Dio();
   final Map<String, Map<String, dynamic>> _markerInfoMap = {};
+  String? _selectedMarkerId; // 선택된 마커 ID
 
   @override
   void initState() {
     super.initState();
-    _requestLocationPermission();
+    _requestLocationPermission(); // 권한 요청
+    getHospital(); // 지도 로드시 병원 데이터 불러오기
+    //getAed(); // AED 데이터 불러오기
   }
 
   Future<void> _requestLocationPermission() async {
@@ -66,99 +71,133 @@ class _MapViewState extends State<MapView> {
     }
   }
 
-  // AED 및 응급실 마커 추가
-  void _addSampleMarkers() {
-    final sampleData = [
-      {
-        'id': 'aed_bupyeong1',
-        'type': 'AED',
-        'name': '부평역 1번 출구 AED',
-        'address': '인천 부평구 부평동',
-        'lat': 37.48995,
-        'lng': 126.72455,
-        'image': 'assets/images/aed_marker.png', // AED 마커 이미지
-      },
-      {
-        'id': 'aed_bupyeong2',
-        'type': 'AED',
-        'name': '부평 지하철역 AED',
-        'address': '인천 부평구 부평동',
-        'lat': 37.49100,
-        'lng': 126.72500,
-        'image': 'assets/images/aed_marker.png', // AED 마커 이미지
-      },
-      {
-        'id': 'er_bupyeong1',
-        'type': '응급실',
-        'name': '부평병원 응급실',
-        'address': '인천 부평구',
-        'lat': 37.49150,
-        'lng': 126.72600,
-        'image': 'assets/images/h_marker.png', // 병원 마커 이미지
-      },
-    ];
+  void getHospital() async {
+    try {
+      final response = await dio.get("http://192.168.40.45:8080/map/gethospital");
+      print("[getHospital] 응답 수신 완료");
 
-    for (var item in sampleData) {
-      final marker = NMarker(
-        id: item['id'] as String,
-        position: NLatLng(
-          item['lat'] as double,
-          item['lng'] as double,
-        ),
-        icon: NOverlayImage.fromAssetImage(item['image'] as String), // 마커에 이미지 추가
-      );
+      final List<dynamic> hospitalList = response.data;
 
-      _markerInfoMap[item['id'] as String] = item;
+      for (var hospital in hospitalList) {
+        final marker = NMarker(
+          id: 'hospital_${hospital["hno"]}',
+          position: NLatLng(hospital["hlat"], hospital["hlong"]),
+          icon: await NOverlayImage.fromAssetImage('assets/images/h_marker.png'),
+        );
 
-      // 마커 클릭 시 상세정보 표시
-      marker.setOnTapListener((NMarker tappedMarker) {
-        final info = _markerInfoMap[tappedMarker.info.id]!;
+        _mapController.addOverlay(marker);
 
-        showModalBottomSheet(
-          context: context,
-          isScrollControlled: true, // 크기 조정 가능
-          builder: (context) => Container(
-            height: 300, // 고정된 높이
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
-            ),
-            child: Center(
+        // 마커 클릭 시 정보창 표시
+        marker.setOnTapListener((NMarker tappedMarker) {
+          // setState(() {
+          //   _selectedMarkerId = tappedMarker.id; // 클릭한 마커 ID를 저장
+          // });
+          showModalBottomSheet(
+            context: context,
+            builder: (context) => Container(
+              padding: EdgeInsets.all(16),
+              height: 200,
               child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    info['name'],
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
+                  Text("종류: ${hospital["type"]}", style: TextStyle(fontSize: 18)),
                   SizedBox(height: 8),
-                  Text(
-                    '종류: ${info['type']}',
-                    textAlign: TextAlign.center,
-                  ),
-                  Text(
-                    '주소: ${info['address']}',
-                    textAlign: TextAlign.center,
-                  ),
+                  Text("병원명: ${hospital["name"]}", style: TextStyle(fontSize: 18)),
+                  SizedBox(height: 8),
+                  Text("응급 연락처: ${hospital["emgTel"]}", style: TextStyle(fontSize: 18)),
+                  SizedBox(height: 8),
+                  Text("주소: ${hospital["address"]}", style: TextStyle(fontSize: 18)),
                 ],
               ),
             ),
-          ),
-        );
-      });
-
-      _mapController.addOverlay(marker);
+          );
+        });
+      }
+    } catch (e) {
+      print("[getHospital] 오류 발생: $e");
     }
   }
 
+  // void getAed() async {
+  //   try {
+  //     final response = await dio.get("http://192.168.40.45:8080/heart/api1");
+  //     print("[getAed] AED 데이터 응답 수신 완료");
+  //
+  //     final List<dynamic> aedList = response.data;
+  //
+  //     // AED 리스트가 제대로 넘어왔는지 확인
+  //     print("[getAed] 데이터 개수: ${aedList.length}");
+  //
+  //     for (var aed in aedList) {
+  //       final double? lat = double.tryParse(aed["wgs84Lat"] ?? '');
+  //       final double? lon = double.tryParse(aed["wgs84Lon"] ?? '');
+  //
+  //       if (lat == null || lon == null) {
+  //         print("[getAed] 유효하지 않은 좌표: $lat, $lon");
+  //         continue;
+  //       }
+  //
+  //       for (int i = 0; i < aedList.length; i++) {
+  //         final aed = aedList[i];
+  //         final double? lat = double.tryParse(aed["wgs84Lat"] ?? '');
+  //         final double? lon = double.tryParse(aed["wgs84Lon"] ?? '');
+  //
+  //         if (lat == null || lon == null) continue;
+  //
+  //         final markerId = 'aed_$i'; // 인덱스를 ID로 사용
+  //
+  //
+  //         //print("[getAed] 추가할 마커 ID: $markerId");
+  //
+  //         final marker = NMarker(
+  //           id: markerId, // 마커 고유 ID
+  //           position: NLatLng(lat, lon),
+  //           icon: await NOverlayImage.fromAssetImage(
+  //               'assets/images/aed_marker.png'),
+  //         );
+  //
+  //         // // 마커가 정상적으로 추가되었는지 확인
+  //         // print("[getAed] 마커 추가됨: $markerId");
+  //
+  //         _mapController.addOverlay(marker);
+  //
+  //         // 마커 클릭 리스너 추가
+  //         marker.setOnTapListener((NMarker tappedMarker) {
+  //           print("[getAed] 마커 클릭됨: $markerId");
+  //           showModalBottomSheet(
+  //             context: context,
+  //             builder: (context) =>
+  //                 Container(
+  //                   padding: EdgeInsets.all(16),
+  //                   height: 200,
+  //                   child: Column(
+  //                     crossAxisAlignment: CrossAxisAlignment.start,
+  //                     children: [
+  //                       Text("설치 장소: ${aed["buildPlace"]}",
+  //                           style: TextStyle(fontSize: 18)),
+  //                       SizedBox(height: 8),
+  //                       Text("관리 기관: ${aed["org"]}",
+  //                           style: TextStyle(fontSize: 16)),
+  //                       SizedBox(height: 8),
+  //                       Text("관리자 연락처: ${aed["clerkTel"]}",
+  //                           style: TextStyle(fontSize: 16)),
+  //                     ],
+  //                   ),
+  //                 ),
+  //           );
+  //         });
+  //       }
+  //     }
+  //   } catch (e) {
+  //     print("[getAed] 오류 발생: $e");
+  //   }
+  // }
+
+
   @override
   Widget build(BuildContext context) {
+    final selectedInfo = _selectedMarkerId != null ? _markerInfoMap[_selectedMarkerId!] : null;
+
     return Scaffold(
       appBar: MyAppBar(),
       body: Stack(
@@ -174,13 +213,49 @@ class _MapViewState extends State<MapView> {
                   ),
                 );
               }
-
-              _addSampleMarkers(); // AED 및 응급실 마커 추가
+              getHospital();
+              //getAed();
             },
           ),
-          // 신고하기
+          if (selectedInfo != null)
+            Positioned.fill( // 전체 화면 덮기
+              child: Container(
+                color: Colors.black.withOpacity(0.5),
+                child: Center( // 이게 핵심! 진짜 화면 가운데 정렬
+                  child: Container(
+                    margin: EdgeInsets.symmetric(horizontal: 30),
+                    padding: EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text("병원 정보", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        SizedBox(height: 10),
+                        Text("종류: ${selectedInfo['type']}"),
+                        Text("이름: ${selectedInfo['name']}"),
+                        Text("응급전화: ${selectedInfo['emgTel']}"),
+                        Text("주소: ${selectedInfo['address']}"),
+                        SizedBox(height: 10),
+                        ElevatedButton(
+                          onPressed: () {
+                            setState(() {
+                              _selectedMarkerId = null;
+                            });
+                          },
+                          child: Text("닫기"),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          // 신고하기 버튼
           Padding(
-            padding: EdgeInsets.all(16.0), // 상하좌우 모두 16
+            padding: EdgeInsets.all(16.0),
             child: SizedBox(
               width: double.infinity,
               height: 50,
@@ -195,10 +270,7 @@ class _MapViewState extends State<MapView> {
                 ),
                 child: Text(
                   "신고하기",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                 ),
               ),
             ),
@@ -212,10 +284,7 @@ class _MapViewState extends State<MapView> {
               foregroundColor: Color(0xFF08da76),
               elevation: 6,
               mini: true,
-              child: Icon(
-                Icons.my_location,
-                size: 30,
-              ),
+              child: Icon(Icons.my_location, size: 30),
               tooltip: '현재 위치로 이동',
             ),
           ),
