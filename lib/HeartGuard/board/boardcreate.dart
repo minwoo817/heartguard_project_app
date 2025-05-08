@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/myappbar.dart';
 
 class BoardCreatePage extends StatefulWidget {
@@ -14,61 +15,89 @@ class _BoardCreatePageState extends State<BoardCreatePage> {
   final TextEditingController contentController = TextEditingController();
   final Dio dio = Dio();
 
-  // ✅ 에뮬레이터용 로컬 서버 주소
-  String baseUrl = "http://192.168.40.13:8080";
-
+  String baseUrl = "http://192.168.40.13:8080"; // 서버 주소
   List<File> _images = [];
   final ImagePicker picker = ImagePicker();
+
   List<Map<String, dynamic>> _categories = [];
   int? selectedCategory;
-
-  // ✅ JWT 토큰 (공백 제거)
-  final String rawToken =
-      "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhYmMxMjMiLCJpYXQiOjE3NDY1OTA0NTksImV4cCI6MTc0NjY3Njg1OX0.fDY4ncxwcshpvW7rBPCtBEo8gPnxQ6UCME_B3jd1-DQ";
-  late final String token;
+  String? token;
+  int? ustate;
 
   @override
   void initState() {
     super.initState();
-    token = "${rawToken.trim()}";
-    print("[DEBUG] JWT 토큰: '$token'"); // 공백 확인
-    fetchCategories(); // 카테고리 불러오기
+    loadTokenAndInit();
   }
 
-  // 카테고리 불러오기
+  Future<void> loadTokenAndInit() async {
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString("token");
+
+    if (token == null) {
+      print("로그인이 필요합니다.");
+      return;
+    }
+
+    await fetchUserInfo();
+    await fetchCategories();
+  }
+
+  Future<void> fetchUserInfo() async {
+    try {
+      final response = await dio.get(
+        "$baseUrl/user/info",
+        options: Options(headers: {'Authorization': token}),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          ustate = response.data['ustate'];
+          print("[DEBUG] ustate: $ustate");
+        });
+      } else {
+        print("유저 정보 불러오기 실패: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("유저 정보 오류: $e");
+    }
+  }
+
   Future<void> fetchCategories() async {
     try {
       final response = await dio.get(
         "$baseUrl/board/category",
-        options: Options(headers: {
-          'Authorization': token,
-        }),
+        options: Options(headers: {'Authorization': token}),
       );
 
       if (response.statusCode == 200) {
         List<dynamic> responseData = response.data;
+
         setState(() {
-          _categories = responseData
-              .map((cat) => {
+          _categories = responseData.map((cat) => {
             'cno': cat['cno'],
             'cname': cat['cname'],
-          })
-              .toList();
-          selectedCategory = _categories.isNotEmpty ? _categories[0]['cno'] : null;
+          }).toList();
+
+          if (ustate == 0) {
+            _categories =
+                _categories.where((cat) => cat['cno'] == 2).toList();
+          } else if (ustate == 1) {
+            _categories =
+                _categories.where((cat) => cat['cno'] == 1).toList();
+          }
+
+          selectedCategory =
+          _categories.isNotEmpty ? _categories[0]['cno'] : null;
         });
       } else {
-        print("카테고리 요청 실패: ${response.statusCode} - ${response.data}");
+        print("카테고리 요청 실패: ${response.statusCode}");
       }
     } catch (e) {
-      if (e is DioError) {
-        print("DioError (카테고리): ${e.response?.statusCode} - ${e.response?.data}");
-      } else {
-        print("Unexpected error (카테고리): $e");
-      }
+      print("카테고리 요청 오류: $e");
     }
   }
 
-  // 이미지 선택
   Future<void> _pickImages() async {
     final List<XFile>? pickedFiles = await picker.pickMultiImage();
 
@@ -79,8 +108,12 @@ class _BoardCreatePageState extends State<BoardCreatePage> {
     }
   }
 
-  // 게시글 생성
   Future<void> createPost() async {
+    if (token == null) {
+      print("로그인이 필요합니다.");
+      return;
+    }
+
     try {
       final formData = FormData();
 
@@ -92,31 +125,30 @@ class _BoardCreatePageState extends State<BoardCreatePage> {
 
       for (var file in _images) {
         formData.files.add(MapEntry(
-          'image',
-          await MultipartFile.fromFile(file.path),
+          'files',
+          await MultipartFile.fromFile(file.path,
+              filename: file.path.split('/').last),
         ));
       }
 
       final response = await dio.post(
         "$baseUrl/board/post",
         data: formData,
-        options: Options(headers: {
-          'Authorization': token,
-          'Content-Type': 'multipart/form-data',
-        }),
+        options: Options(
+          headers: {
+            'Authorization': token,
+            'Content-Type': 'multipart/form-data',
+          },
+        ),
       );
 
       if (response.statusCode == 201) {
         Navigator.pop(context);
       } else {
-        print("업로드 실패: ${response.statusCode} - ${response.data}");
+        print("게시글 등록 실패: ${response.statusCode}");
       }
     } catch (e) {
-      if (e is DioError) {
-        print("DioError (게시글 작성): ${e.response?.statusCode} - ${e.response?.data}");
-      } else {
-        print("Unexpected error (게시글 작성): $e");
-      }
+      print("게시글 작성 오류: $e");
     }
   }
 
@@ -154,13 +186,9 @@ class _BoardCreatePageState extends State<BoardCreatePage> {
                 child: Text(cat['cname'] as String),
               ))
                   .toList(),
-              onChanged: (value) {
-                setState(() {
-                  selectedCategory = value;
-                });
-              },
+              onChanged: null, // 선택 불가능하게 고정
               decoration: InputDecoration(
-                labelText: "카테고리 선택",
+                labelText: "카테고리",
                 border: OutlineInputBorder(),
               ),
             ),
@@ -168,10 +196,10 @@ class _BoardCreatePageState extends State<BoardCreatePage> {
             ElevatedButton.icon(
               onPressed: _pickImages,
               icon: Icon(Icons.image),
-              label: Text("이미지 여러 장 첨부"),
+              label: Text("이미지 첨부"),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Color(0xFFFFDAE0),
-                foregroundColor: Colors.white,
+                foregroundColor: Colors.black,
               ),
             ),
             SizedBox(height: 8),
@@ -199,7 +227,7 @@ class _BoardCreatePageState extends State<BoardCreatePage> {
                 child: Text("작성 완료"),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFFFFDAE0),
-                  foregroundColor: Colors.white,
+                  foregroundColor: Colors.black,
                   padding: EdgeInsets.symmetric(vertical: 16),
                   textStyle: TextStyle(fontSize: 16),
                 ),
