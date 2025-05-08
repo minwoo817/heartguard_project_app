@@ -1,9 +1,31 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:heartguard_project_app/HeartGuard/user/info.dart';
 import 'package:heartguard_project_app/HeartGuard/user/login.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
+
+  void getUid(String token, BuildContext context) async {
+    try {
+      Dio dio = Dio();
+      dio.options.headers['Authorization'] = token;
+
+      final response = await dio.get("http://192.168.40.45:8080/user/info");
+      final uid = response.data['uid'];
+
+      if (uid == 'admin') {
+        Navigator.pushNamed(context, '/adminhome');
+      } else {
+        Navigator.pushNamed(context, '/');
+      }
+    } catch (e) {
+      print(e);
+      Navigator.pushNamed(context, '/');
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return AppBar(
@@ -18,28 +40,28 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
 
       backgroundColor: Color(0xFFFFDAE0),
       leadingWidth: 70,
+      
+      // 왼쪽 로고
+      leading: Padding(
+        padding: EdgeInsets.all(8.0),
+        child: GestureDetector(
+          onTap: () async {
+            final prefs = await SharedPreferences.getInstance();
+            final token = prefs.getString('token') ?? '';
 
-        // 왼쪽 로고
-        leading: Padding(
-          padding: EdgeInsets.all(8.0),
-          child: GestureDetector(
-            onTap: () async {
-              final prefs = await SharedPreferences.getInstance();
-              final uid = prefs.getString('uid');
-
-              if (uid == 'admin') {
-                Navigator.pushNamed(context, '/adminhome');
-              } else {
-                Navigator.pushNamed(context, '/');
-              }
-            },
-            child: Image.asset(
-              'assets/images/logo1.png',
-              width: 70,
-              fit: BoxFit.contain,
-            ),
+            if (token.isNotEmpty) {
+              getUid(token, context);
+            } else {
+              Navigator.pushNamed(context, '/');
+            }
+          },
+          child: Image.asset(
+            'assets/images/logo1.png',
+            width: 70,
+            fit: BoxFit.contain,
           ),
         ),
+      ),
 
       // 오른쪽 아이콘
         actions: [

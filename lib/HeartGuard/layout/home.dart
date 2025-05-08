@@ -45,31 +45,6 @@ class _HomeState extends State<Home>{
                       ),
                     ),
                     SizedBox(height: 20),
-                    
-                    
-                    
-                    // 신고하기
-                    SizedBox(
-                      width: double.infinity,
-                      height: 80,
-                      child: TextButton(
-                        onPressed: () => Navigator.pushNamed(context, "/report"),
-                        style: TextButton.styleFrom(
-                          backgroundColor: Color(0xFFFF0000),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8)
-                          ),
-                        ),
-                        child: Text("신고하기",
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 20),
 
                     // AED 찾기
                     SizedBox(

@@ -178,6 +178,31 @@ class _MapViewState extends State<MapView> {
               _addSampleMarkers(); // AED 및 응급실 마커 추가
             },
           ),
+          // 신고하기
+          Padding(
+            padding: EdgeInsets.all(16.0), // 상하좌우 모두 16
+            child: SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: TextButton(
+                onPressed: () => Navigator.pushNamed(context, "/report"),
+                style: TextButton.styleFrom(
+                  backgroundColor: Color(0xFFFF0000),
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: Text(
+                  "신고하기",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ),
           Positioned(
             bottom: 30,
             right: 30,
