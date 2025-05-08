@@ -11,7 +11,7 @@ class Hlog extends StatefulWidget {
 
 class _HlogState extends State<Hlog> {
   List<dynamic> logs = [];
-  List<String> socketMessages = [];
+  List<String> socketMessages = [];  // WebSocket으로 받은 메시지 저장 리스트
   bool isLoading = true;
   String errorMessage = '';
   late WebSocketChannel channel;
@@ -26,16 +26,18 @@ class _HlogState extends State<Hlog> {
       Uri.parse('ws://192.168.40.40:8080/ws/notify'),
     );
 
+    // WebSocket으로 메시지 수신
     channel.stream.listen((message) {
       if (!mounted) return;
+
       setState(() {
-        socketMessages.add(message); // 메시지를 리스트에 추가
+        socketMessages.add(message); // 수신된 메시지를 리스트에 추가
       });
 
       // SnackBar 알림
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("📢 $message"),
+          content: Text("$message"),
           backgroundColor: Colors.orange.shade600,
           duration: Duration(seconds: 3),
         ),
@@ -144,6 +146,7 @@ class _HlogState extends State<Hlog> {
           ? Center(child: Text(errorMessage, style: TextStyle(color: Colors.red)))
           : Column(
         children: [
+          // 실시간 메시지 영역
           if (socketMessages.isNotEmpty)
             Container(
               width: double.infinity,
@@ -157,6 +160,7 @@ class _HlogState extends State<Hlog> {
                 ],
               ),
             ),
+          // 신고 로그 목록
           Expanded(
             child: ListView.builder(
               itemCount: logs.length,
