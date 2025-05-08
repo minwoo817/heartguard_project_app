@@ -11,6 +11,11 @@ class UserManagePage extends StatefulWidget {
 class _UserManagePageState extends State<UserManagePage> {
   List<dynamic> userList = [];
   String token = "";
+  int currentPage = 1;
+  int totalPages = 1;
+  String searchKeyword = "";
+
+  TextEditingController searchController = TextEditingController();
 
   @override
   void initState() {
@@ -30,17 +35,20 @@ class _UserManagePageState extends State<UserManagePage> {
     fetchUsers();
   }
 
-  void fetchUsers() async {
+  void fetchUsers({int page = 1, String keyword = ""}) async {
     try {
       Dio dio = Dio();
       dio.options.headers['Authorization'] = token;
 
       final response = await dio.get(
         "http://192.168.40.37:8080/user/all",
-        queryParameters: {"page": 1},
+        queryParameters: {"page": page, "keyword": keyword},
       );
+
       final resultData = response.data;
       setState(() {
+        currentPage = resultData['number'] + 1;
+        totalPages = resultData['totalPages'];
         userList = resultData['content'];
       });
     } catch (e) {
@@ -63,7 +71,11 @@ class _UserManagePageState extends State<UserManagePage> {
               },
             ),
             TextButton(
-              child: Text("예", style: TextStyle(color: Colors.red)),
+              style: TextButton.styleFrom(
+                backgroundColor: Color(0xFFfd4b85),
+                foregroundColor: Colors.white,
+              ),
+              child: Text("예"),
               onPressed: () {
                 Navigator.of(context).pop();
                 deleteUser(uno);
@@ -86,9 +98,7 @@ class _UserManagePageState extends State<UserManagePage> {
       );
 
       if (response.statusCode == 204) {
-        setState(() {
-          userList.removeWhere((user) => user['uno'] == uno);
-        });
+        fetchUsers(page: currentPage, keyword: searchKeyword); // 새로고침
       } else {
         showErrorDialog("삭제 실패: ${response.data}");
       }
@@ -117,39 +127,111 @@ class _UserManagePageState extends State<UserManagePage> {
     );
   }
 
+  void onSearch() {
+    setState(() {
+      searchKeyword = searchController.text;
+    });
+    fetchUsers(page: 1, keyword: searchKeyword);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AdminAppBar(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: userList.isEmpty
-            ? Center(child: CircularProgressIndicator())
-            : SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            columns: [
-              DataColumn(label: Text("사용자번호")),
-              DataColumn(label: Text("아이디")),
-              DataColumn(label: Text("이름")),
-              DataColumn(label: Text("전화번호")),
-              DataColumn(label: Text("탈퇴")),
-            ],
-            rows: userList.map((user) {
-              return DataRow(cells: [
-                DataCell(Text(user['uno'].toString())),
-                DataCell(Text(user['uid'] ?? '')),
-                DataCell(Text(user['uname'] ?? '')),
-                DataCell(Text(user['uphone'] ?? '')),
-                DataCell(
-                  IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
-                    onPressed: () => confirmDelete(user['uno']),
+        child: Column(
+          children: [
+            // 🔍 검색 필드
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: searchController,
+                    decoration: InputDecoration(
+                      labelText: "이름으로 검색",
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                 ),
-              ]);
-            }).toList(),
-          ),
+                SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: onSearch,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFFfd4b85),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text("검색"),
+                ),
+              ],
+            ),
+            SizedBox(height: 20),
+
+            // 📋 회원 목록
+            Expanded(
+              child: userList.isEmpty
+                  ? Center(child: CircularProgressIndicator())
+                  : SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                  headingRowColor: MaterialStateProperty.all(Color(0xFFfd4b85)),
+                  headingTextStyle: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  columns: [
+                    DataColumn(label: Text("사용자번호")),
+                    DataColumn(label: Text("아이디")),
+                    DataColumn(label: Text("이름")),
+                    DataColumn(label: Text("전화번호")),
+                    DataColumn(label: Text("탈퇴")),
+                  ],
+                  rows: userList.map((user) {
+                    return DataRow(cells: [
+                      DataCell(Text(user['uno'].toString())),
+                      DataCell(Text(user['uid'] ?? '')),
+                      DataCell(Text(user['uname'] ?? '')),
+                      DataCell(Text(user['uphone'] ?? '')),
+                      DataCell(
+                        IconButton(
+                          icon: Icon(Icons.delete),
+                          color: Color(0xFFfd4b85),
+                          onPressed: () => confirmDelete(user['uno']),
+                        ),
+                      ),
+                    ]);
+                  }).toList(),
+                ),
+              ),
+            ),
+
+            // ⏮️⏭️ 페이지 이동
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: currentPage > 1
+                      ? () => fetchUsers(page: currentPage - 1, keyword: searchKeyword)
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFFfd4b85),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text("이전"),
+                ),
+                SizedBox(width: 10),
+                Text("페이지 $currentPage / $totalPages"),
+                SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: currentPage < totalPages
+                      ? () => fetchUsers(page: currentPage + 1, keyword: searchKeyword)
+                      : null,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFFfd4b85),
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text("다음"),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

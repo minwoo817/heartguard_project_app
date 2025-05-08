@@ -1,33 +1,32 @@
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/home.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/myappbar.dart';
+import 'package:heartguard_project_app/HeartGuard/layout/adminappbar.dart';
 import 'package:heartguard_project_app/HeartGuard/user/delete.dart';
 import 'package:heartguard_project_app/HeartGuard/user/login.dart';
 import 'package:heartguard_project_app/HeartGuard/user/update.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:heartguard_project_app/HeartGuard/user/update.dart';
-import 'package:heartguard_project_app/HeartGuard/user/delete.dart';
-class Info extends StatefulWidget{
+
+class Info extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
     return _InfoState();
   }
 }
 
-class _InfoState extends State<Info>{
+class _InfoState extends State<Info> {
   int uno = 0;
   String uid = "";
   String uname = "";
   String uphone = "";
+  bool? isLogin;
 
   @override
   void initState() {
+    super.initState();
     loginCheck();
   }
-
-  bool? isLogin;
 
   void loginCheck() async {
     final prefs = await SharedPreferences.getInstance();
@@ -40,7 +39,9 @@ class _InfoState extends State<Info>{
       });
     } else {
       Navigator.pushReplacement(
-          context, MaterialPageRoute(builder: (context) => Login()));
+        context,
+        MaterialPageRoute(builder: (context) => Login()),
+      );
     }
   }
 
@@ -73,7 +74,9 @@ class _InfoState extends State<Info>{
     await dio.get("http://192.168.40.37:8080/user/logout");
     await prefs.remove('token');
     Navigator.pushReplacement(
-        context, MaterialPageRoute(builder: (context) => Home()));
+      context,
+      MaterialPageRoute(builder: (context) => Home()),
+    );
   }
 
   @override
@@ -81,51 +84,86 @@ class _InfoState extends State<Info>{
     if (isLogin == null) {
       return Scaffold(
         appBar: MyAppBar(),
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
+
     return Scaffold(
-      appBar: MyAppBar(),
-      body: Container(
-        margin: EdgeInsets.all(60),
-        padding: EdgeInsets.all(60),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("회원번호 : $uno"),
-            SizedBox(height: 20),
-            Text("아이디 : $uid  "),
-            SizedBox(height: 20),
-            Text("이름(닉네임) : $uname"),
-            SizedBox(height: 20),
-            Text("전화번호 : $uphone"),
-            SizedBox(height: 30),
-            ElevatedButton(onPressed: logout, child: Text("로그아웃")),
-            SizedBox(height: 20),
-            if (uid != 'admin') ...[
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                      context, MaterialPageRoute(builder: (context) => UserUpdate()));
-                },
-                child: Text("회원정보 수정"),
-              ),
-              SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                      context, MaterialPageRoute(builder: (context) => UserDelete()));
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
+      backgroundColor: Colors.white,
+      appBar: uid == 'admin' ? AdminAppBar() : MyAppBar(),
+      body: Center(
+        child: Container(
+          margin: EdgeInsets.all(40),
+          padding: EdgeInsets.all(30),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            color: Colors.grey.shade100,
+            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("회원번호 : $uno", style: TextStyle(fontSize: 16)),
+              SizedBox(height: 12),
+              Text("아이디 : $uid", style: TextStyle(fontSize: 16)),
+              SizedBox(height: 12),
+              Text("이름(닉네임) : $uname", style: TextStyle(fontSize: 16)),
+              SizedBox(height: 12),
+              Text("전화번호 : $uphone", style: TextStyle(fontSize: 16)),
+              SizedBox(height: 30),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: logout,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.grey,
+                    foregroundColor: Colors.white,
+                    padding: EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: Text("로그아웃", style: TextStyle(fontSize: 16)),
                 ),
-                child: Text("회원 탈퇴"),
               ),
+              SizedBox(height: 16),
+              if (uid != 'admin') ...[
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => UserUpdate()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: Text("회원정보 수정", style: TextStyle(fontSize: 16)),
+                  ),
+                ),
+                SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => UserDelete()),
+                      );
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                    ),
+                    child: Text("회원 탈퇴", style: TextStyle(fontSize: 16)),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
