@@ -11,7 +11,8 @@ class _HomeState extends State<Home> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: MyAppBar(),
-      backgroundColor: Color(0xFFfef7ff),
+      // backgroundColor: Color(0xFFfef7ff),
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -22,7 +23,7 @@ class _HomeState extends State<Home> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("안녕하세요 👋", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                Text("안녕하세요 👋\n골든타임 구조 플랫폼", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
 
               ],
             ),
@@ -104,7 +105,7 @@ class _HomeState extends State<Home> {
         margin: const EdgeInsets.only(bottom: 24),
         elevation: 3,
         child: Container(
-          height: 140, // 높이 증가
+          height: 200, // 높이 증가
           padding: const EdgeInsets.symmetric(horizontal: 20),
           child: Row(
             children: [
