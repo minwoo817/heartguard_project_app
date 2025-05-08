@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/hospitalmyappbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class Hlog extends StatefulWidget {
   @override
@@ -10,13 +11,42 @@ class Hlog extends StatefulWidget {
 
 class _HlogState extends State<Hlog> {
   List<dynamic> logs = [];
+  List<String> socketMessages = [];
   bool isLoading = true;
   String errorMessage = '';
+  late WebSocketChannel channel;
 
   @override
   void initState() {
     super.initState();
     fetchLogs();
+
+    // WebSocket 연결
+    channel = WebSocketChannel.connect(
+      Uri.parse('ws://192.168.40.40:8080/ws/notify'),
+    );
+
+    channel.stream.listen((message) {
+      if (!mounted) return;
+      setState(() {
+        socketMessages.add(message); // 메시지를 리스트에 추가
+      });
+
+      // SnackBar 알림
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("📢 $message"),
+          backgroundColor: Colors.orange.shade600,
+          duration: Duration(seconds: 3),
+        ),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    channel.sink.close();
+    super.dispose();
   }
 
   Future<void> fetchLogs() async {
@@ -46,7 +76,7 @@ class _HlogState extends State<Hlog> {
       }
     } catch (e) {
       setState(() {
-        errorMessage = '오류가 발생했습니다: $e';
+        errorMessage = '오류 발생: $e';
         isLoading = false;
       });
     }
@@ -83,14 +113,9 @@ class _HlogState extends State<Hlog> {
     try {
       final response = await dio.post(
         'http://192.168.40.40:8080/log/state',
-        data: {
-          "lno": lno,
-          "lstate": 1,
-        },
+        data: {"lno": lno, "lstate": 1},
       );
-      if (response.statusCode == 200) {
-        fetchLogs();
-      }
+      if (response.statusCode == 200) fetchLogs();
     } catch (e) {
       print(e);
     }
@@ -101,14 +126,9 @@ class _HlogState extends State<Hlog> {
     try {
       final response = await dio.post(
         'http://192.168.40.40:8080/log/state',
-        data: {
-          "lno": lno,
-          "lstate": 0,
-        },
+        data: {"lno": lno, "lstate": 0},
       );
-      if (response.statusCode == 200) {
-        fetchLogs();
-      }
+      if (response.statusCode == 200) fetchLogs();
     } catch (e) {
       print(e);
     }
@@ -117,102 +137,100 @@ class _HlogState extends State<Hlog> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: HospitalMyAppbar(), // MyAppBar 사용
+      appBar: HospitalMyAppbar(),
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : errorMessage.isNotEmpty
           ? Center(child: Text(errorMessage, style: TextStyle(color: Colors.red)))
-          : ListView.builder(
-        itemCount: logs.length,
-        itemBuilder: (context, index) {
-          var log = logs[index];
-          return Card(
-            margin: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-            elevation: 5,
-            color: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
+          : Column(
+        children: [
+          if (socketMessages.isNotEmpty)
+            Container(
+              width: double.infinity,
+              color: Colors.yellow.shade100,
+              padding: EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text("신고 번호: ${log['lno']}",
-                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black)),
-                  SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Icon(Icons.location_on, color: Colors.blue),
-                      SizedBox(width: 6),
-                      Text("위도: ${log['llat']}, 경도: ${log['llong']}",
-                          style: TextStyle(fontSize: 14, color: Colors.black54)),
-                    ],
-                  ),
-                  SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(Icons.calendar_today, color: Colors.orange),
-                      SizedBox(width: 6),
-                      Text("생성일: ${log['create_at']}",
-                          style: TextStyle(fontSize: 14, color: Colors.black54)),
-                    ],
-                  ),
-                  SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Icon(Icons.phone, color: Colors.green),
-                      SizedBox(width: 6),
-                      Text("전화번호: ${log['phone']}",
-                          style: TextStyle(fontSize: 14, color: Colors.black54)),
-                    ],
-                  ),
-                  // 상태 항목을 제일 마지막으로 이동
-                  SizedBox(height: 10),
-                  Text(
-                    "상태: ${getStatusText(log['lsate'] ?? log['lstate'])}",
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: getStatusColor(log['lsate'] ?? log['lstate']),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 6),
-                  if (log['lstate'] == 2) ...[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // 수락 버튼
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.green,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: TextButton(
-                            onPressed: () => accept(log['lno']),
-                            child: Text("수락", style: TextStyle(color: Colors.white)),
-                          ),
-                        ),
-                        SizedBox(width: 10),
-                        // 거절 버튼
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.red,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: TextButton(
-                            onPressed: () => refuse(log['lno']),
-                            child: Text("거절", style: TextStyle(color: Colors.white)),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                  Text("📢 실시간 신고 알림", style: TextStyle(fontWeight: FontWeight.bold)),
+                  ...socketMessages.map((msg) => Text("• $msg")).toList(),
                 ],
               ),
             ),
-          );
-        },
+          Expanded(
+            child: ListView.builder(
+              itemCount: logs.length,
+              itemBuilder: (context, index) {
+                var log = logs[index];
+                return Card(
+                  margin: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  elevation: 5,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("신고 번호: ${log['lno']}",
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                        SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(Icons.location_on, color: Colors.blue),
+                            SizedBox(width: 6),
+                            Text("위도: ${log['llat']}, 경도: ${log['llong']}"),
+                          ],
+                        ),
+                        SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(Icons.calendar_today, color: Colors.orange),
+                            SizedBox(width: 6),
+                            Text("생성일: ${log['create_at']}"),
+                          ],
+                        ),
+                        SizedBox(height: 6),
+                        Row(
+                          children: [
+                            Icon(Icons.phone, color: Colors.green),
+                            SizedBox(width: 6),
+                            Text("전화번호: ${log['phone']}"),
+                          ],
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          "상태: ${getStatusText(log['lstate'])}",
+                          style: TextStyle(
+                            color: getStatusColor(log['lstate']),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 6),
+                        if (log['lstate'] == 2)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ElevatedButton(
+                                onPressed: () => accept(log['lno']),
+                                child: Text("수락"),
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                              ),
+                              SizedBox(width: 10),
+                              ElevatedButton(
+                                onPressed: () => refuse(log['lno']),
+                                child: Text("거절"),
+                                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                              ),
+                            ],
+                          ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

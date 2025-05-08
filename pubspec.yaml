@@ -29,7 +29,7 @@ environment:
 # versions available, run `flutter pub outdated`.
 dependencies:
   # 소켓
-  socket_io_client:
+  web_socket_channel: ^2.1.0
   # 전화번호 자동 추출용
   get_phone_number: ^3.0.12
   # http: ^0.13.6
