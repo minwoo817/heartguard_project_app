@@ -80,15 +80,12 @@ class _BoardCreatePageState extends State<BoardCreatePage> {
           }).toList();
 
           if (ustate == 0) {
-            _categories =
-                _categories.where((cat) => cat['cno'] == 2).toList();
+            _categories = _categories.where((cat) => cat['cno'] == 2).toList();
           } else if (ustate == 1) {
-            _categories =
-                _categories.where((cat) => cat['cno'] == 1).toList();
+            _categories = _categories.where((cat) => cat['cno'] == 1).toList();
           }
 
-          selectedCategory =
-          _categories.isNotEmpty ? _categories[0]['cno'] : null;
+          selectedCategory = _categories.isNotEmpty ? _categories[0]['cno'] : null;
         });
       } else {
         print("카테고리 요청 실패: ${response.statusCode}");
@@ -123,12 +120,14 @@ class _BoardCreatePageState extends State<BoardCreatePage> {
         MapEntry('cno', selectedCategory.toString()),
       ]);
 
-      for (var file in _images) {
-        formData.files.add(MapEntry(
-          'files',
-          await MultipartFile.fromFile(file.path,
-              filename: file.path.split('/').last),
-        ));
+      // 관리자(ustate == 1)일 때만 이미지 첨부
+      if (ustate == 1) {
+        for (var file in _images) {
+          formData.files.add(MapEntry(
+            'files',
+            await MultipartFile.fromFile(file.path, filename: file.path.split('/').last),
+          ));
+        }
       }
 
       final response = await dio.post(
@@ -161,21 +160,13 @@ class _BoardCreatePageState extends State<BoardCreatePage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+
             TextField(
               controller: titleController,
               decoration: InputDecoration(
                 labelText: "제목",
                 border: OutlineInputBorder(),
               ),
-            ),
-            SizedBox(height: 16),
-            TextField(
-              controller: contentController,
-              decoration: InputDecoration(
-                labelText: "내용",
-                border: OutlineInputBorder(),
-              ),
-              maxLines: 6,
             ),
             SizedBox(height: 16),
             DropdownButtonFormField<int>(
@@ -186,39 +177,55 @@ class _BoardCreatePageState extends State<BoardCreatePage> {
                 child: Text(cat['cname'] as String),
               ))
                   .toList(),
-              onChanged: null, // 선택 불가능하게 고정
+              onChanged: null,
               decoration: InputDecoration(
                 labelText: "카테고리",
                 border: OutlineInputBorder(),
               ),
             ),
             SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: _pickImages,
-              icon: Icon(Icons.image),
-              label: Text("이미지 첨부"),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFFFFDAE0),
-                foregroundColor: Colors.black,
-              ),
-            ),
-            SizedBox(height: 8),
-            _images.isEmpty
-                ? Text("선택된 이미지 없음")
-                : Wrap(
-              spacing: 8,
-              children: _images
-                  .map((img) => ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.file(
-                  img,
-                  width: 100,
-                  height: 100,
-                  fit: BoxFit.cover,
+            TextField(
+              controller: contentController,
+              decoration: InputDecoration(
+                labelText: "내용",
+                border: OutlineInputBorder(
+
                 ),
-              ))
-                  .toList(),
+              ),
+              maxLines: 10,
             ),
+
+            // 관리자일 경우에만 이미지 첨부 UI 표시
+            if (ustate == 1) ...[
+              SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: _pickImages,
+                icon: Icon(Icons.image),
+                label: Text("이미지 첨부"),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFFFFDAE0),
+                  foregroundColor: Colors.black,
+                ),
+              ),
+              SizedBox(height: 8),
+              _images.isEmpty
+                  ? Text("선택된 이미지 없음")
+                  : Wrap(
+                spacing: 8,
+                children: _images
+                    .map((img) => ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.file(
+                    img,
+                    width: 100,
+                    height: 100,
+                    fit: BoxFit.cover,
+                  ),
+                ))
+                    .toList(),
+              ),
+            ],
+
             SizedBox(height: 24),
             SizedBox(
               width: double.infinity,

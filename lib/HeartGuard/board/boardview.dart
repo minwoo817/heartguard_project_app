@@ -261,6 +261,10 @@ class _BoardViewState extends State<BoardView> {
                 child: ElevatedButton(
                   onPressed: submitComment,
                   child: Text("댓글 등록"),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Color(0xFFFFDAE0),
+                    foregroundColor: Colors.black,
+                  ),
                 ),
               ),
             ],
