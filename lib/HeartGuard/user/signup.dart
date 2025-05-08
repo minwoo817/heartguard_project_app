@@ -1,17 +1,17 @@
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/myappbar.dart';
 import 'package:heartguard_project_app/HeartGuard/user/login.dart';
 
-class Signup extends StatefulWidget{
+class Signup extends StatefulWidget {
   @override
   State<StatefulWidget> createState() {
     return _SignupState();
   }
 }
-class _SignupState extends State<Signup>{
+
+class _SignupState extends State<Signup> {
   TextEditingController uidControl = TextEditingController();
   TextEditingController upwdControl = TextEditingController();
   TextEditingController unameControl = TextEditingController();
@@ -77,47 +77,89 @@ class _SignupState extends State<Signup>{
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: MyAppBar(),
-      body: Container(
-        padding : EdgeInsets.all( 30 ),
-        margin : EdgeInsets.all( 30 ) ,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: uidControl,
-              decoration: InputDecoration( labelText: "아이디", border: OutlineInputBorder() ),
+      body: Center(
+        child: Container(
+          padding: EdgeInsets.all(30),
+          margin: EdgeInsets.all(30),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text("회원가입", style: TextStyle(fontSize: 25, fontWeight: FontWeight.w600, color: Color(0xFFfd4b85)),),
+                SizedBox(height: 30),
+                TextField(
+                  controller: uidControl,
+                  decoration: InputDecoration(
+                    labelText: "아이디",
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.person_outline),
+                  ),
+                ),
+                SizedBox(height: 20),
+                TextField(
+                  controller: upwdControl,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    labelText: "비밀번호",
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.lock_outline),
+                  ),
+                ),
+                SizedBox(height: 20),
+                TextField(
+                  controller: unameControl,
+                  decoration: InputDecoration(
+                    labelText: "닉네임",
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.badge_outlined),
+                  ),
+                ),
+                SizedBox(height: 20),
+                TextField(
+                  controller: uphoneControl,
+                  keyboardType: TextInputType.phone,
+                  decoration: InputDecoration(
+                    labelText: "전화번호",
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.phone_android),
+                  ),
+                ),
+                SizedBox(height: 30),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton(
+                    onPressed: onSignup,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Color(0xFFfd4b85),
+                      foregroundColor: Colors.white,
+                      textStyle: TextStyle(fontSize: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    ),
+                    child: Text("회원가입"),
+                  ),
+                ),
+                SizedBox(height: 20),
+                Divider(),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(builder: (context) => Login()),
+                    );
+                  },
+                  child: Text(
+                    "이미 가입된 사용자 이면 _로그인",
+                    style: TextStyle(color: Colors.black),
+                  ),
+                ),
+              ],
             ),
-            SizedBox( height: 20, ),
-            TextField(
-              controller: upwdControl,
-              obscureText: true, // 입력한 텍스트 가리기
-              decoration: InputDecoration( labelText: "비밀번호" , border: OutlineInputBorder() ),
-            ),
-            SizedBox( height: 20, ),
-            TextField(
-              controller: unameControl,
-              decoration: InputDecoration( labelText: "닉네임" , border: OutlineInputBorder() ),
-            ),
-            SizedBox( height: 20, ),
-            TextField(
-              controller: uphoneControl,
-              decoration: InputDecoration( labelText: "전화번호" , border: OutlineInputBorder() ),
-            ),
-            SizedBox( height: 20, ),
-            ElevatedButton( onPressed: onSignup , child: Text("회원가입") ),
-            SizedBox( height: 20, ),
-            TextButton( onPressed: ()=>{
-              Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context)=> Login() )
-              )
-            }, child: Text("이미 가입된 사용자 이면 _로그인") )
-          ],
+          ),
         ),
       ),
     );
