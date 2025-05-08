@@ -106,7 +106,7 @@ class _LoginState extends State<Login> {
                   Navigator.pushReplacement(
                       context, MaterialPageRoute(builder: (context) => Hlogin()));
                 },
-                child: Text("병원 로그인", style: TextStyle(fontSize: 14)),
+                child: Text("병원 로그인으로 전환", style: TextStyle(fontSize: 14)),
               ),
             ],
           ),
