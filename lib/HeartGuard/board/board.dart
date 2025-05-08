@@ -12,9 +12,10 @@ class Board extends StatefulWidget {
 }
 
 class _BoardState extends State<Board> {
-  int cno = 1; // 선택된 카테고리
-  List<dynamic> allBoards = []; // 전체 게시글
-  List<dynamic> filteredBoards = []; // 분류한 게시글
+  int cno = 1; // 기본 카테고리
+  bool _isInitialCategorySet = false; // arguments 적용 여부
+  List<dynamic> allBoards = [];
+  List<dynamic> filteredBoards = [];
   final dio = Dio();
   String baseUrl = "http://192.168.40.13:8080";
   final ScrollController scrollController = ScrollController();
@@ -27,30 +28,32 @@ class _BoardState extends State<Board> {
   @override
   void initState() {
     super.initState();
-    fetchAllBoards(); // 처음에 모든 게시글을 불러옴
+    fetchAllBoards();
   }
 
-  // 게시글 전체 불러오기
   Future<void> fetchAllBoards() async {
     try {
       final response = await dio.get("$baseUrl/board/all");
-      setState(() {
-        allBoards = response.data['content'];
-        applyCategoryFilter(); // 카테고리 필터 적용
-      });
+
+      if (response.data != null && response.data['content'] != null) {
+        setState(() {
+          allBoards = response.data['content'];
+          applyCategoryFilter();
+        });
+      } else {
+        print("게시글이 없습니다.");
+      }
     } catch (e) {
       print("에러 발생: $e");
     }
   }
 
-  // 카테고리 필터 적용
   void applyCategoryFilter() {
     setState(() {
       filteredBoards = allBoards
           .where((board) => board['cno'] == cno)
           .toList();
 
-      // 작성일 기준으로 내림차순 정렬
       filteredBoards.sort((a, b) {
         DateTime dateA = DateTime.parse(a['createAt']);
         DateTime dateB = DateTime.parse(b['createAt']);
@@ -59,7 +62,6 @@ class _BoardState extends State<Board> {
     });
   }
 
-  // 카테고리 변경 처리
   void onCategoryChanged(int newCno) {
     setState(() {
       cno = newCno;
@@ -67,28 +69,38 @@ class _BoardState extends State<Board> {
     });
   }
 
-  // 댓글이 있는지 확인
   Future<bool> hasReplies(int bno) async {
     try {
       final response = await dio.get("$baseUrl/reply/view", queryParameters: {"bno": bno});
-      return response.data.isNotEmpty;
+      return response.data != null && response.data.isNotEmpty;
     } catch (e) {
       print("댓글 조회 에러: $e");
       return false;
     }
   }
 
-  // 새로 고침 처리
   Future<void> _onRefresh() async {
-    await fetchAllBoards(); // 게시글 새로 고침
+    await fetchAllBoards();
   }
 
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+
+    if (!_isInitialCategorySet && args != null && args.containsKey("category")) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          cno = args["category"];
+          applyCategoryFilter();
+          _isInitialCategorySet = true;
+        });
+      });
+    }
+
     return Scaffold(
       appBar: MyAppBar(),
       body: RefreshIndicator(
-        onRefresh: _onRefresh, // 새로 고침 처리
+        onRefresh: _onRefresh,
         child: Column(
           children: [
             Padding(
@@ -135,16 +147,11 @@ class _BoardState extends State<Board> {
                       future: hasReplies(board['bno']),
                       builder: (context, snapshot) {
                         String statusMessage = '';
-
                         if (snapshot.connectionState == ConnectionState.waiting) {
-                          return Container();
+                          return Container(); // 로딩 중일 때는 빈 위젯
                         }
                         if (snapshot.hasData && cno == 2) {
-                          if (snapshot.data!) {
-                            statusMessage = "접수완료";
-                          } else {
-                            statusMessage = "접수대기";
-                          }
+                          statusMessage = snapshot.data! ? "접수완료" : "접수대기";
                         }
 
                         return Column(
@@ -196,7 +203,6 @@ class _BoardState extends State<Board> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          // 글 작성 페이지로 이동
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -204,11 +210,8 @@ class _BoardState extends State<Board> {
             ),
           );
         },
-        child: Icon(
-          Icons.add,
-          color: Colors.white, // 아이콘 색상은 하얀색으로 설정
-        ),
-        backgroundColor: Color(0xFFFFDAE0), // 배경 색상 핑크로 변경
+        child: Icon(Icons.add, color: Colors.black),
+        backgroundColor: Color(0xFFFFDAE0),
       ),
     );
   }
