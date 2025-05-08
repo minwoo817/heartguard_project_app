@@ -2,7 +2,6 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/hospitalmyappbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 class Hlog extends StatefulWidget {
   @override
@@ -11,44 +10,13 @@ class Hlog extends StatefulWidget {
 
 class _HlogState extends State<Hlog> {
   List<dynamic> logs = [];
-  List<String> socketMessages = [];  // WebSocket으로 받은 메시지 저장 리스트
   bool isLoading = true;
   String errorMessage = '';
-  late WebSocketChannel channel;
 
   @override
   void initState() {
     super.initState();
     fetchLogs();
-
-    // WebSocket 연결
-    channel = WebSocketChannel.connect(
-      Uri.parse('ws://192.168.40.40:8080/ws/notify'),
-    );
-
-    // WebSocket으로 메시지 수신
-    channel.stream.listen((message) {
-      if (!mounted) return;
-
-      setState(() {
-        socketMessages.add(message); // 수신된 메시지를 리스트에 추가
-      });
-
-      // SnackBar 알림
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("$message"),
-          backgroundColor: Colors.orange.shade600,
-          duration: Duration(seconds: 3),
-        ),
-      );
-    });
-  }
-
-  @override
-  void dispose() {
-    channel.sink.close();
-    super.dispose();
   }
 
   Future<void> fetchLogs() async {
@@ -146,20 +114,6 @@ class _HlogState extends State<Hlog> {
           ? Center(child: Text(errorMessage, style: TextStyle(color: Colors.red)))
           : Column(
         children: [
-          // 실시간 메시지 영역
-          if (socketMessages.isNotEmpty)
-            Container(
-              width: double.infinity,
-              color: Colors.yellow.shade100,
-              padding: EdgeInsets.all(12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("📢 실시간 신고 알림", style: TextStyle(fontWeight: FontWeight.bold)),
-                  ...socketMessages.map((msg) => Text("• $msg")).toList(),
-                ],
-              ),
-            ),
           // 신고 로그 목록
           Expanded(
             child: ListView.builder(
