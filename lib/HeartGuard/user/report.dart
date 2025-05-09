@@ -4,6 +4,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:get_phone_number/get_phone_number.dart';
 import 'package:intl/intl.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/myappbar.dart';
+import 'package:web_socket_channel/status.dart' as status;
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class Report extends StatelessWidget {
   @override
@@ -24,10 +26,14 @@ class _SubmitPageState extends State<SubmitPage> {
   String? reportTime;
   String resultMessage = "전송 중...";
   bool isLoading = true;
+  String errorMessage = '';
+  WebSocketChannel? channel;
+  List<String> socketMessages = [];  // WebSocket으로 받은 메시지 저장 리스트
 
   @override
   void initState() {
     super.initState();
+    initializeWebSocket();
     submitReport();
   }
   Future<void> asd() async {
@@ -38,6 +44,44 @@ class _SubmitPageState extends State<SubmitPage> {
       llat = pos.latitude;
       llong = pos.longitude;
     });
+  }
+
+  @override
+  void dispose() {
+    // WebSocket 연결 종료
+    channel?.sink.close(status.normalClosure);
+    super.dispose();
+  }
+
+  void initializeWebSocket() async {
+
+    try {
+      // WebSocket 채널 초기화
+      channel = WebSocketChannel.connect(
+        Uri.parse('ws://192.168.40.40:8080/ws/user'),
+      );
+      print('WebSocket에 입장 완료');
+
+      // WebSocket으로 메시지 수신
+      channel?.stream.listen((message) {
+        if (!mounted) return;
+
+        setState(() {
+          socketMessages.add(message);
+        });
+        // SnackBar 알림
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("$message"),
+            backgroundColor: Colors.orange.shade600,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      });
+
+    } catch (e) {
+      print('WebSocket 연결 실패: $e');
+    }
   }
 
   Future<void> submitReport() async {
