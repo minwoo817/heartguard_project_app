@@ -56,12 +56,13 @@ class _SubmitPageState extends State<SubmitPage> {
 
   void initializeWebSocket() async {
     try {
+      String phone = await GetPhoneNumber().get();
       channel = WebSocketChannel.connect(
-        Uri.parse('ws://192.168.40.40:8080/ws/user'),
+        Uri.parse('ws://192.168.40.40:8080/ws/user/$phone'),
       );
 
       // WebSocket에 핸드폰 번호 등록 메시지 전송
-      String phone = await GetPhoneNumber().get();
+
       channel?.sink.add("신고접수:$phone");
 
       channel?.stream.listen((message) {
