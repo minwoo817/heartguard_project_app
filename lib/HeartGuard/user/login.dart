@@ -23,7 +23,7 @@ class _LoginState extends State<Login> {
     try {
       Dio dio = Dio();
       final sendData = {"uid": uidControl.text, "upwd": upwdControl.text};
-      final response = await dio.post("http://192.168.40.37:8080/user/login", data: sendData);
+      final response = await dio.post("http://192.168.40.45:8080/user/login", data: sendData);
       final data = response.data;
 
       if (data != '') {

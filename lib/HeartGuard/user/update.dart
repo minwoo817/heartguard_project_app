@@ -32,7 +32,7 @@ class _UserUpdateState extends State<UserUpdate> {
     dio.options.headers['Authorization'] = token;
 
     try {
-      final response = await dio.get("http://192.168.40.37:8080/user/info");
+      final response = await dio.get("http://192.168.40.45:8080/user/info");
       final data = response.data;
 
       setState(() {
@@ -59,7 +59,7 @@ class _UserUpdateState extends State<UserUpdate> {
     };
 
     try {
-      final response = await dio.put("http://192.168.40.37:8080/user/update", data: sendData);
+      final response = await dio.put("http://192.168.40.45:8080/user/update", data: sendData);
       print("수정 성공: ${response.data}");
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Home()));
     } catch (e) {

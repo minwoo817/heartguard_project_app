@@ -43,7 +43,7 @@ class _SubmitPageState extends State<SubmitPage> {
 
       Dio dio = Dio();
       final response = await dio.post(
-        "http://192.168.40.40:8080/log/submit",
+        "http://192.168.40.45:8080/log/submit",
         data: sendData,
       );
 

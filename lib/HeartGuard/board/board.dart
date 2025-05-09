@@ -17,7 +17,7 @@ class _BoardState extends State<Board> {
   List<dynamic> allBoards = [];
   List<dynamic> filteredBoards = [];
   final dio = Dio();
-  String baseUrl = "http://192.168.40.13:8080";
+  String baseUrl = "http://192.168.40.45:8080";
   final ScrollController scrollController = ScrollController();
 
   final Map<int, String> categoryMap = {

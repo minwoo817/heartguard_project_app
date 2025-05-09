@@ -21,7 +21,7 @@ class _UserDeleteState extends State<UserDelete> {
     dio.options.headers['Authorization'] = token;
 
     try {
-      final response = await dio.delete("http://192.168.40.37:8080/user/delete");
+      final response = await dio.delete("http://192.168.40.45:8080/user/delete");
       print("삭제 성공: ${response.data}");
 
       await prefs.remove('token');

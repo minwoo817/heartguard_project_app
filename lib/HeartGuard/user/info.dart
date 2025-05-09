@@ -49,7 +49,7 @@ class _InfoState extends State<Info> {
     try {
       Dio dio = Dio();
       dio.options.headers['Authorization'] = token;
-      final response = await dio.get("http://192.168.40.37:8080/user/info");
+      final response = await dio.get("http://192.168.40.45:8080/user/info");
       final data = response.data;
       print(data);
       if (data != '') {
@@ -71,7 +71,7 @@ class _InfoState extends State<Info> {
     if (token == null) return;
     Dio dio = Dio();
     dio.options.headers['Authorization'] = token;
-    await dio.get("http://192.168.40.37:8080/user/logout");
+    await dio.get("http://192.168.40.45:8080/user/logout");
     await prefs.remove('token');
     Navigator.pushReplacement(
       context,

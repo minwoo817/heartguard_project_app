@@ -12,7 +12,7 @@ class MapView extends StatefulWidget {
 }
 
 class _MapViewState extends State<MapView> {
-  late NaverMapController _mapController;
+  NaverMapController? _mapController; // null 가능 타입으로 변경
   NLatLng? _currentPosition; // GPS 위치
   NMarker? _currentMarker; // GPS 위치 마커
   final dio = Dio();
@@ -53,8 +53,8 @@ class _MapViewState extends State<MapView> {
         _currentPosition = NLatLng(pos.latitude, pos.longitude);
       });
 
-      if (_currentPosition != null) {
-        _mapController?.updateCamera(
+      if (_currentPosition != null && _mapController != null) {
+        _mapController!.updateCamera(
           NCameraUpdate.scrollAndZoomTo(
             target: _currentPosition!,
             zoom: 15,
@@ -68,13 +68,15 @@ class _MapViewState extends State<MapView> {
             position: _currentPosition!,
           );
           _currentMarker = marker;
-          _mapController?.addOverlay(marker);
+          _mapController!.addOverlay(marker);
         } else {
           // 기존 마커 삭제하고 새로 생성
           try {
-            await _mapController?.deleteOverlay(
-                NOverlayInfo(type: NOverlayType.marker, id: 'current_location_marker')
-            );
+            if (_mapController != null) {
+              await _mapController!.deleteOverlay(
+                  NOverlayInfo(type: NOverlayType.marker, id: 'current_location_marker')
+              );
+            }
           } catch (e) {
             print("기존 위치 마커 삭제 중 오류: $e");
           }
@@ -84,7 +86,9 @@ class _MapViewState extends State<MapView> {
             position: _currentPosition!,
           );
           _currentMarker = marker;
-          _mapController?.addOverlay(marker);
+          if (_mapController != null) {
+            _mapController!.addOverlay(marker);
+          }
         }
       }
     } catch (e) {
@@ -95,7 +99,7 @@ class _MapViewState extends State<MapView> {
   // 병원 데이터를 가져와서 저장 (한 번만 실행)
   Future<void> _loadHospitalData() async {
     try {
-      final response = await dio.get("http://172.30.1.26:8080/map/gethospital");
+      final response = await dio.get("http://192.168.40.45:8080/map/gethospital");
       print("[_loadHospitalData] 응답 수신 완료");
       print("[_loadHospitalData] Raw response: ${response.data}");
 
@@ -123,7 +127,7 @@ class _MapViewState extends State<MapView> {
   // AED 데이터를 가져와서 저장 (한 번만 실행)
   Future<void> _loadAedData() async {
     try {
-      final response = await dio.get("http://172.30.1.26:8080/heart/api1");
+      final response = await dio.get("http://192.168.40.45:8080/heart/api1");
       print("[_loadAedData] AED 데이터 응답 수신 완료");
       _allAeds = List<Map<String, dynamic>>.from(response.data);
       print("[_loadAedData] AED 데이터 개수: ${_allAeds.length}");
@@ -140,8 +144,8 @@ class _MapViewState extends State<MapView> {
 
     try {
       // 현재 화면 범위 가져오기
-      final bounds = await _mapController.getContentBounds();
-      final centerPosition = await _mapController.getCameraPosition();
+      final bounds = await _mapController!.getContentBounds();
+      final centerPosition = await _mapController!.getCameraPosition();
 
       // 화면 크기의 70% 영역 계산
       final latitudeDelta = (bounds.northEast.latitude - bounds.southWest.latitude) * 0.7;
@@ -231,10 +235,12 @@ class _MapViewState extends State<MapView> {
               final marker = NMarker(
                 id: markerId,
                 position: position,
-                icon: await NOverlayImage.fromAssetImage('assets/images/h_marker.png'),
+                icon: await NOverlayImage.fromAssetImage('assets/images/h_marker2.png'),
               );
 
-              await _mapController.addOverlay(marker);
+              if (_mapController != null) {
+                _mapController!.addOverlay(marker);
+              }
               newVisibleMarkers[markerId] = marker;
               hospitalMarkerAdded++;
 
@@ -280,10 +286,12 @@ class _MapViewState extends State<MapView> {
             final marker = NMarker(
               id: markerId,
               position: position,
-              icon: await NOverlayImage.fromAssetImage('assets/images/aed_marker.png'),
+              icon: await NOverlayImage.fromAssetImage('assets/images/aed_marker2.png'),
             );
 
-            await _mapController.addOverlay(marker);
+            if (_mapController != null) {
+              _mapController!.addOverlay(marker);
+            }
             newVisibleMarkers[markerId] = marker;
 
             // 마커 클릭 리스너 설정
@@ -299,9 +307,9 @@ class _MapViewState extends State<MapView> {
         if (!newVisibleMarkers.containsKey(entry.key) &&
             !entry.key.startsWith('current_location_marker')) {
           try {
-            await _mapController.deleteOverlay(
-                NOverlayInfo(type: NOverlayType.marker, id: entry.key)
-            );
+            if (_mapController != null) {
+              await _mapController!.deleteOverlay(NOverlayInfo(type: NOverlayType.marker, id: entry.key));
+            }
           } catch (e) {
             print("마커 삭제 중 오류 발생 (${entry.key}): $e");
           }
@@ -341,9 +349,10 @@ class _MapViewState extends State<MapView> {
       context: context,
       barrierDismissible: true,
       builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+      backgroundColor: Colors.transparent,
+      child: Material(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
         child: Container(
           padding: EdgeInsets.all(20),
           child: Column(
@@ -421,6 +430,7 @@ class _MapViewState extends State<MapView> {
           ),
         ),
       ),
+      ),
     );
   }
 
@@ -430,94 +440,97 @@ class _MapViewState extends State<MapView> {
       context: context,
       barrierDismissible: true,
       builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Container(
-          padding: EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    "AED 정보",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFfd4b85),
+        backgroundColor: Colors.transparent, // Dialog 자체는 투명하게
+        child: Material(
+          color: Colors.white, // 흰색 배경
+          borderRadius: BorderRadius.circular(20), // 둥근 테두리
+          child: Container(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "AED 정보",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFfd4b85),
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.close, color: Colors.grey),
-                    onPressed: () => Navigator.of(context).pop(),
-                    padding: EdgeInsets.zero,
-                    constraints: BoxConstraints(),
-                  ),
-                ],
-              ),
-              Divider(height: 40, thickness: 1),
-              SizedBox(height: 10),
-              _buildInfoRow("🏢 관리기관", aed["org"] ?? '정보 없음', maxLines: 2),
-              SizedBox(height: 10),
-              _buildInfoRow("📍 설치장소", aed["buildPlace"] ?? '정보 없음', maxLines: 2),
-              SizedBox(height: 10),
-              _buildInfoRow("📞 연락처", aed["clerkTel"] ?? '정보 없음'),
-              if (aed["buildAddress"] != null) ...[
+                    IconButton(
+                      icon: Icon(Icons.close, color: Colors.grey),
+                      onPressed: () => Navigator.of(context).pop(),
+                      padding: EdgeInsets.zero,
+                      constraints: BoxConstraints(),
+                    ),
+                  ],
+                ),
+                Divider(height: 40, thickness: 1),
                 SizedBox(height: 10),
-                _buildInfoRow("🗺️ 주소", aed["buildAddress"], maxLines: 3),
-              ],
-              SizedBox(height: 40),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () {
-                      // 전화 걸기 기능
-                      final phoneNumber = aed["clerkTel"];
-                      if (phoneNumber != null && phoneNumber != '정보 없음') {
-                        final url = 'tel:$phoneNumber';
-                        launchUrl(Uri.parse(url));
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFFfd4b85),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text("전화 연결"),
-                  ),
-                  SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () {
-                      final double? lat = double.tryParse(aed["wgs84Lat"]?.toString() ?? '');
-                      final double? lon = double.tryParse(aed["wgs84Lon"]?.toString() ?? '');
-                      if (lat != null && lon != null) {
-                        _openNaverMap(lat, lon, aed["buildPlace"] ?? 'AED 위치');
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blueAccent,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text("경로 안내"),
-                  ),
+                _buildInfoRow("🏢 관리기관", aed["org"] ?? '정보 없음', maxLines: 2),
+                SizedBox(height: 10),
+                _buildInfoRow("📍 설치장소", aed["buildPlace"] ?? '정보 없음', maxLines: 2),
+                SizedBox(height: 10),
+                _buildInfoRow("📞 연락처", aed["clerkTel"] ?? '정보 없음'),
+                if (aed["buildAddress"] != null) ...[
+                  SizedBox(height: 10),
+                  _buildInfoRow("🗺️ 주소", aed["buildAddress"], maxLines: 3),
                 ],
-              ),
-            ],
+                SizedBox(height: 40),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        // 전화 걸기 기능
+                        final phoneNumber = aed["clerkTel"];
+                        if (phoneNumber != null && phoneNumber != '정보 없음') {
+                          final url = 'tel:$phoneNumber';
+                          launchUrl(Uri.parse(url));
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFFfd4b85),
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text("전화 연결"),
+                    ),
+                    SizedBox(width: 8),
+                    ElevatedButton(
+                      onPressed: () {
+                        final double? lat = double.tryParse(aed["wgs84Lat"]?.toString() ?? '');
+                        final double? lon = double.tryParse(aed["wgs84Lon"]?.toString() ?? '');
+                        if (lat != null && lon != null) {
+                          _openNaverMap(lat, lon, aed["buildPlace"] ?? 'AED 위치');
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        foregroundColor: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: Text("경로 안내"),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
 
 
   // 정보 행을 위한 위젯
@@ -648,8 +661,8 @@ class _MapViewState extends State<MapView> {
               await _loadAedData();
 
               // 첫 화면 설정
-              if (_currentPosition != null) {
-                await _mapController.updateCamera(
+              if (_currentPosition != null && _mapController != null) {
+                await _mapController!.updateCamera(
                   NCameraUpdate.scrollAndZoomTo(
                     target: _currentPosition!,
                     zoom: 15,
@@ -668,8 +681,10 @@ class _MapViewState extends State<MapView> {
             },
             onCameraIdle: () {
               // 카메라 이동이 완전히 끝났을 때 마커 업데이트
-              _updateMarkersBasedOnViewport();
-            },
+              if (_mapController != null) {
+                _updateMarkersBasedOnViewport();
+              }
+            }
           ),
           // 신고하기 버튼
           Padding(

@@ -41,7 +41,7 @@ class _UserManagePageState extends State<UserManagePage> {
       dio.options.headers['Authorization'] = token;
 
       final response = await dio.get(
-        "http://192.168.40.37:8080/user/all",
+        "http://192.168.40.45:8080/user/all",
         queryParameters: {"page": page, "keyword": keyword},
       );
 
@@ -93,7 +93,7 @@ class _UserManagePageState extends State<UserManagePage> {
       dio.options.headers['Authorization'] = token;
 
       final response = await dio.delete(
-        "http://192.168.40.37:8080/user/deleteUser",
+        "http://192.168.40.45:8080/user/deleteUser",
         queryParameters: {"uno": uno},
       );
 
