@@ -48,7 +48,7 @@ class _HinfoState extends State<Hinfo> {
     try {
       Dio dio = Dio();
       dio.options.headers['Authorization'] = token;
-      final response = await dio.get("http://192.168.40.45:8080/hospital/info");
+      final response = await dio.get("http://192.168.40.40:8080/hospital/info");
       final data = response.data;
       if (data != '') {
         setState(() {
@@ -73,7 +73,7 @@ class _HinfoState extends State<Hinfo> {
     if (token == null) return;
     Dio dio = Dio();
     dio.options.headers['Authorization'] = token;
-    await dio.get("http://192.168.40.45:8080/hospital/logout");
+    await dio.get("http://192.168.40.40:8080/hospital/logout");
     await prefs.remove('token');
     Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Home()));
   }

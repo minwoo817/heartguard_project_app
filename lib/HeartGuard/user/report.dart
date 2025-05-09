@@ -50,6 +50,7 @@ class _SubmitPageState extends State<SubmitPage> {
   void dispose() {
     // WebSocket 연결 종료
     channel?.sink.close(status.normalClosure);
+    print("위젯 닫힘");
     super.dispose();
   }
 

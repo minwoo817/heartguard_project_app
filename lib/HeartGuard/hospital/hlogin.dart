@@ -20,7 +20,7 @@ class _HloginState extends State<Hlogin> {
       Dio dio = Dio();
       final sendData = {'hid': hidControl.text, 'hpwd': hpwdControl.text};
       final response = await dio.post(
-        "http://192.168.40.45:8080/hospital/login",
+        "http://192.168.40.40:8080/hospital/login",
         data: sendData,
       );
       final data = response.data;
