@@ -155,6 +155,7 @@ class _BoardCreatePageState extends State<BoardCreatePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: MyAppBar(),
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(

@@ -153,6 +153,8 @@ class _BoardViewState extends State<BoardView> {
     if (isLoading) {
       return Scaffold(
         appBar: MyAppBar(),
+
+        backgroundColor: Colors.white,
         body: Center(child: CircularProgressIndicator()),
       );
     }
@@ -160,6 +162,7 @@ class _BoardViewState extends State<BoardView> {
     if (!isAccessible) {
       return Scaffold(
         appBar: MyAppBar(),
+        backgroundColor: Colors.white,
         body: Center(child: Text("이 게시글을 볼 수 있는 권한이 없습니다.")),
       );
     }
@@ -168,6 +171,7 @@ class _BoardViewState extends State<BoardView> {
 
     return Scaffold(
       appBar: MyAppBar(),
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
