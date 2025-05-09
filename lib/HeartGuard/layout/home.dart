@@ -23,16 +23,21 @@ class _HomeState extends State<Home> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("안녕하세요 👋\n골든타임 구조 플랫폼", style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+                Text("소중한 생명을 지키는 길,\n지금 여기서 시작하세요 🌻",
+                    style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                    )
+                ),
 
               ],
             ),
-            SizedBox(height: 24),
+            SizedBox(height: 35),
 
             /// AED 찾기 카드
             _buildFeatureCard(
               title: "AED 찾기",
-              description: "가까운 AED 위치를 확인하세요",
+              description: "생명을 살리는 AED\n가까운 위치를 확인해보세요",
               icon: Icons.favorite,
               color: Color(0xFFfd4b85),
               onTap: () => Navigator.pushNamed(context, "/mapview"),
@@ -41,7 +46,7 @@ class _HomeState extends State<Home> {
             /// 응급실 찾기 카드
             _buildFeatureCard(
               title: "응급실 찾기",
-              description: "근처 응급실을 빠르게 검색합니다",
+              description: "내 주변 응급실\n지금 확인하고 대비하세요",
               icon: Icons.local_hospital,
               color: Colors.blueAccent,
               onTap: () => Navigator.pushNamed(context, "/mapview"),
@@ -72,16 +77,6 @@ class _HomeState extends State<Home> {
               ],
             ),
 
-            SizedBox(height: 30),
-
-            /// 관리자 이동 버튼 (테스트용)
-            Center(
-              child: TextButton(
-                onPressed: () => Navigator.pushNamed(context, "/adminhome"),
-                child: Text("관리자 이동 (테스트용)", style: TextStyle(color: Colors.grey)),
-              ),
-            ),
-
             SizedBox(height: 40), // 하단 여백 추가로 더 안정적인 화면 구성
           ],
         ),
@@ -101,7 +96,7 @@ class _HomeState extends State<Home> {
       onTap: onTap,
       child: Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        color: Colors.white,
+        color: Color(0xFFfafafa),
         margin: const EdgeInsets.only(bottom: 24),
         elevation: 3,
         child: Container(
@@ -144,7 +139,7 @@ class _HomeState extends State<Home> {
       onTap: onTap,
       child: Card(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        color: Colors.white,
+        color: Color(0xFFf3f3f3),
         elevation: 2,
         child: Container(
           padding: const EdgeInsets.all(20),
