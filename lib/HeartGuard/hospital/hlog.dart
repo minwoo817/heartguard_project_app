@@ -2,6 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/hospitalmyappbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
+import 'package:web_socket_channel/status.dart' as status;
 
 class Hlog extends StatefulWidget {
   @override
@@ -12,12 +14,41 @@ class _HlogState extends State<Hlog> {
   List<dynamic> logs = [];
   bool isLoading = true;
   String errorMessage = '';
+  WebSocketChannel? channel;
 
   @override
   void initState() {
     super.initState();
+    initializeWebSocket();
     fetchLogs();
   }
+
+  @override
+  void dispose() {
+    // WebSocket 연결 종료
+    channel?.sink.close(status.normalClosure);
+    super.dispose();
+  }
+
+  void initializeWebSocket() async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    try {
+      // WebSocket 채널 초기화
+      channel = WebSocketChannel.connect(
+        Uri.parse('ws://192.168.40.40:8080/ws/notify'),
+      );
+
+      // 서버에 인증 토큰 보내기
+      channel?.sink.add('Bearer $token');
+      print('WebSocket에 입장 완료');
+
+    } catch (e) {
+      print('WebSocket 연결 실패: $e');
+    }
+  }
+
 
   Future<void> fetchLogs() async {
     final dio = Dio();
@@ -111,7 +142,10 @@ class _HlogState extends State<Hlog> {
       body: isLoading
           ? Center(child: CircularProgressIndicator())
           : errorMessage.isNotEmpty
-          ? Center(child: Text(errorMessage, style: TextStyle(color: Colors.red)))
+          ? Center(
+        child: Text(errorMessage,
+            style: TextStyle(color: Colors.red)),
+      )
           : Column(
         children: [
           // 신고 로그 목록
@@ -121,28 +155,35 @@ class _HlogState extends State<Hlog> {
               itemBuilder: (context, index) {
                 var log = logs[index];
                 return Card(
-                  margin: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  margin: EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 6),
                   elevation: 5,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text("신고 번호: ${log['lno']}",
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16)),
                         SizedBox(height: 8),
                         Row(
                           children: [
-                            Icon(Icons.location_on, color: Colors.blue),
+                            Icon(Icons.location_on,
+                                color: Colors.blue),
                             SizedBox(width: 6),
-                            Text("위도: ${log['llat']}, 경도: ${log['llong']}"),
+                            Text(
+                                "위도: ${log['llat']}, 경도: ${log['llong']}"),
                           ],
                         ),
                         SizedBox(height: 6),
                         Row(
                           children: [
-                            Icon(Icons.calendar_today, color: Colors.orange),
+                            Icon(Icons.calendar_today,
+                                color: Colors.orange),
                             SizedBox(width: 6),
                             Text("생성일: ${log['create_at']}"),
                           ],
@@ -150,7 +191,8 @@ class _HlogState extends State<Hlog> {
                         SizedBox(height: 6),
                         Row(
                           children: [
-                            Icon(Icons.phone, color: Colors.green),
+                            Icon(Icons.phone,
+                                color: Colors.green),
                             SizedBox(width: 6),
                             Text("전화번호: ${log['phone']}"),
                           ],
@@ -166,18 +208,24 @@ class _HlogState extends State<Hlog> {
                         SizedBox(height: 6),
                         if (log['lstate'] == 2)
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisAlignment:
+                            MainAxisAlignment.center,
                             children: [
                               ElevatedButton(
-                                onPressed: () => accept(log['lno']),
+                                onPressed: () =>
+                                    accept(log['lno']),
                                 child: Text("수락"),
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor:
+                                    Colors.green),
                               ),
                               SizedBox(width: 10),
                               ElevatedButton(
-                                onPressed: () => refuse(log['lno']),
+                                onPressed: () =>
+                                    refuse(log['lno']),
                                 child: Text("거절"),
-                                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                                style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.red),
                               ),
                             ],
                           ),
