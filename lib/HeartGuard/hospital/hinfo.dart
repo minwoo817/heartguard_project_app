@@ -48,7 +48,7 @@ class _HinfoState extends State<Hinfo> {
     try {
       Dio dio = Dio();
       dio.options.headers['Authorization'] = token;
-      final response = await dio.get("http://192.168.40.40:8080/hospital/info");
+      final response = await dio.get("http://192.168.40.45:8080/hospital/info");
       final data = response.data;
       if (data != '') {
         setState(() {

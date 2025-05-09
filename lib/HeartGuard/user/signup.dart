@@ -46,7 +46,7 @@ class _SignupState extends State<Signup> {
 
     try {
       Dio dio = Dio();
-      final response = await dio.post("http://192.168.40.37:8080/user/signup", data: sendData);
+      final response = await dio.post("http://192.168.40.45:8080/user/signup", data: sendData);
       final data = response.data;
 
       Navigator.pop(context);
