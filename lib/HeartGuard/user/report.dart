@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get_phone_number/get_phone_number.dart';
 import 'package:intl/intl.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/myappbar.dart';
@@ -18,8 +19,8 @@ class SubmitPage extends StatefulWidget {
 
 class _SubmitPageState extends State<SubmitPage> {
   String? phone;
-  double llat = 12.34;
-  double llong = 56.78;
+  double llat = 0.0;
+  double llong = 0.0;
   String? reportTime;
   String resultMessage = "전송 중...";
   bool isLoading = true;
@@ -29,9 +30,19 @@ class _SubmitPageState extends State<SubmitPage> {
     super.initState();
     submitReport();
   }
+  Future<void> asd() async {
+    Position pos = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+    setState(() {
+      llat = pos.latitude;
+      llong = pos.longitude;
+    });
+  }
 
   Future<void> submitReport() async {
     try {
+      await asd();
       phone = await GetPhoneNumber().get();
       reportTime = DateFormat("yyyy-MM-dd HH:mm:ss").format(DateTime.now());
 
