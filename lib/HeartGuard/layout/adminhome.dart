@@ -11,6 +11,7 @@ class _AdminHomeState extends State<AdminHome> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+
       appBar: AdminAppBar(),
       backgroundColor: Color(0xFFfef7ff),
       body: SingleChildScrollView(

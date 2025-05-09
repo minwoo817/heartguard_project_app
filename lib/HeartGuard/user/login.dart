@@ -48,6 +48,7 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: MyAppBar(),
       body: Center(
         child: Container(
@@ -99,14 +100,14 @@ class _LoginState extends State<Login> {
                   Navigator.pushReplacement(
                       context, MaterialPageRoute(builder: (context) => Signup()));
                 },
-                child: Text("아직 회원이 아니신가요? _회원가입", style: TextStyle(fontSize: 14)),
+                child: Text("아직 회원이 아니신가요? _회원가입", style: TextStyle(fontSize: 14, color: Colors.black)),
               ),
               TextButton(
                 onPressed: () {
                   Navigator.pushReplacement(
                       context, MaterialPageRoute(builder: (context) => Hlogin()));
                 },
-                child: Text("병원 로그인으로 전환", style: TextStyle(fontSize: 14)),
+                child: Text("병원 로그인으로 전환", style: TextStyle(fontSize: 14, color: Colors.black)),
               ),
             ],
           ),

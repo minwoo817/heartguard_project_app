@@ -42,6 +42,7 @@ class _HloginState extends State<Hlogin> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: HospitalMyAppbar(),
       body: Center(
         child: Container(
@@ -93,7 +94,7 @@ class _HloginState extends State<Hlogin> {
                   Navigator.pushReplacement(
                       context, MaterialPageRoute(builder: (context) => Login()));
                 },
-                child: Text("사용자 로그인으로 전환", style: TextStyle(fontSize: 14)),
+                child: Text("사용자 로그인으로 전환", style: TextStyle(fontSize: 14, color: Colors.black)),
               ),
             ],
           ),

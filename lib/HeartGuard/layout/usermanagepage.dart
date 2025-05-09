@@ -137,6 +137,7 @@ class _UserManagePageState extends State<UserManagePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AdminAppBar(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
