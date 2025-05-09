@@ -15,6 +15,7 @@ class _HlogState extends State<Hlog> {
   bool isLoading = true;
   String errorMessage = '';
   WebSocketChannel? channel;
+  List<String> socketMessages = [];  // WebSocket으로 받은 메시지 저장 리스트
 
   @override
   void initState() {
@@ -31,18 +32,34 @@ class _HlogState extends State<Hlog> {
   }
 
   void initializeWebSocket() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
 
     try {
       // WebSocket 채널 초기화
       channel = WebSocketChannel.connect(
-        Uri.parse('ws://192.168.40.40:8080/ws/notify'),
+        Uri.parse('ws://192.168.40.40:8080/ws/hospital'),
       );
-
-      // 서버에 인증 토큰 보내기
-      channel?.sink.add('Bearer $token');
       print('WebSocket에 입장 완료');
+
+      // WebSocket으로 메시지 수신
+      channel?.stream.listen((message) {
+        if (!mounted) return;
+
+        // 새로운 로그 재호출
+        fetchLogs();
+
+        setState(() {
+          socketMessages.add(message); // 수신된 메시지를 리스트에 추가
+        });
+        // SnackBar 알림
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("$message"),
+            backgroundColor: Colors.orange.shade600,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      });
+
 
     } catch (e) {
       print('WebSocket 연결 실패: $e');
