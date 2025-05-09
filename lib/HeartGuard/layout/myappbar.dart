@@ -12,7 +12,7 @@ class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
       final token = prefs.getString('token') ?? '';
 
       if (token.isEmpty) {
-        Navigator.pushNamed(context, '/');
+        Navigator.pushReplacementNamed(context, '/');
         return;
       }
 
