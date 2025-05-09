@@ -7,7 +7,7 @@ class AdminAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-        title: Text("HeartGuard",
+        title: Text("HeartGuard | 골든타임 구조 플랫폼",
           style: TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.w600,
