@@ -43,7 +43,7 @@ class _AdminHomeState extends State<AdminHome> {
               description: "AED 호출 로그 전체 조회",
               icon: Icons.history,
               color: Colors.deepOrange,
-              onTap: () => Navigator.pushNamed(context, "/hlog"),
+              onTap: () => Navigator.pushNamed(context, "/hospitallog"),
             ),
 
             /// CPR, AED 가이드 글쓰기
