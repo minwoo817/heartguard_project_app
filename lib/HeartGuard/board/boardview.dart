@@ -17,7 +17,7 @@ class _BoardViewState extends State<BoardView> {
   Map<String, dynamic> board = {};
   List<dynamic> comments = [];
   final dio = Dio();
-  final baseUrl = "http://192.168.40.13:8080";
+  final baseUrl = "http://192.168.40.45:8080";
   bool isOwnerOrAdmin = false;
   bool isLoading = true;
   bool isAccessible = true;

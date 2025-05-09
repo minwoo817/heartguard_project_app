@@ -16,7 +16,7 @@ class _BoardCreatePageState extends State<BoardCreatePage> {
   final TextEditingController contentController = TextEditingController();
   final Dio dio = Dio();
 
-  String baseUrl = "http://192.168.40.13:8080"; // 서버 주소
+  String baseUrl = "http://192.168.40.45:8080"; // 서버 주소
   List<File> _images = [];
   final ImagePicker picker = ImagePicker();
 
