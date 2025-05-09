@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:heartguard_project_app/HeartGuard/layout/adminappbar.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/myappbar.dart';
@@ -15,7 +16,7 @@ class _BoardCreatePageState extends State<BoardCreatePage> {
   final TextEditingController contentController = TextEditingController();
   final Dio dio = Dio();
 
-  String baseUrl = "http://192.168.40.45:8080"; // 서버 주소
+  String baseUrl = "http://192.168.40.13:8080"; // 서버 주소
   List<File> _images = [];
   final ImagePicker picker = ImagePicker();
 
@@ -23,6 +24,7 @@ class _BoardCreatePageState extends State<BoardCreatePage> {
   int? selectedCategory;
   String? token;
   int? ustate;
+  String? uid; // 로그인된 사용자 UID
 
   @override
   void initState() {
@@ -154,7 +156,7 @@ class _BoardCreatePageState extends State<BoardCreatePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppBar(),
+      appBar: uid == 'admin' ? AdminAppBar() : MyAppBar(),
       backgroundColor: Colors.white,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

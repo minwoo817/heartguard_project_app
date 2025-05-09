@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:heartguard_project_app/HeartGuard/layout/adminappbar.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/myappbar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -16,10 +17,11 @@ class _BoardViewState extends State<BoardView> {
   Map<String, dynamic> board = {};
   List<dynamic> comments = [];
   final dio = Dio();
-  final baseUrl = "http://192.168.40.45:8080";
+  final baseUrl = "http://192.168.40.13:8080";
   bool isOwnerOrAdmin = false;
   bool isLoading = true;
   bool isAccessible = true;
+  String? uid; // 로그인된 사용자 UID
   Map<String, dynamic>? userInfo;
 
   TextEditingController commentController = TextEditingController(
@@ -97,6 +99,14 @@ class _BoardViewState extends State<BoardView> {
       });
     }
   }
+  // SharedPreferences에서 uid를 가져오는 함수
+  Future<void> _loadUid() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? loadedUid = prefs.getString('uid');
+    setState(() {
+      uid = loadedUid;
+    });
+  }
 
   Future<void> submitComment() async {
     try {
@@ -152,7 +162,7 @@ class _BoardViewState extends State<BoardView> {
   Widget build(BuildContext context) {
     if (isLoading) {
       return Scaffold(
-        appBar: MyAppBar(),
+        appBar: uid == 'admin' ? AdminAppBar() : MyAppBar(), // UID에 따라 앱바 변경
 
         backgroundColor: Colors.white,
         body: Center(child: CircularProgressIndicator()),
