@@ -1,8 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter/material.dart';
 import 'package:heartguard_project_app/HeartGuard/board/boardcreate.dart';
 import 'package:heartguard_project_app/HeartGuard/board/boardview.dart';
+import 'package:heartguard_project_app/HeartGuard/layout/adminappbar.dart';
 import 'package:heartguard_project_app/HeartGuard/layout/myappbar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class Board extends StatefulWidget {
   @override
@@ -19,6 +21,7 @@ class _BoardState extends State<Board> {
   final dio = Dio();
   String baseUrl = "http://192.168.40.45:8080";
   final ScrollController scrollController = ScrollController();
+  String? uid; // 로그인된 사용자 UID
 
   final Map<int, String> categoryMap = {
     1: "공지사항",
@@ -29,8 +32,47 @@ class _BoardState extends State<Board> {
   void initState() {
     super.initState();
     fetchAllBoards();
+    loadTokenAndInit();
   }
 
+  List<Map<String, dynamic>> _categories = [];
+  int? selectedCategory;
+  String? token;
+  int? ustate;
+
+  Future<void> loadTokenAndInit() async {
+    final prefs = await SharedPreferences.getInstance();
+    token = prefs.getString("token");
+
+    if (token == null) {
+      print("로그인이 필요합니다.");
+      return;
+    }
+
+    await fetchUserInfo();
+  }
+
+  Future<void> fetchUserInfo() async {
+    try {
+      final response = await dio.get(
+        "$baseUrl/user/info",
+        options: Options(headers: {'Authorization': token}),
+      );
+
+      if (response.statusCode == 200) {
+        setState(() {
+          ustate = response.data['ustate'];
+          print("[DEBUG] ustate: $ustate");
+        });
+      } else {
+        print("유저 정보 불러오기 실패: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("유저 정보 오류: $e");
+    }
+  }
+
+  // 게시글 목록 가져오기
   Future<void> fetchAllBoards() async {
     try {
       final response = await dio.get("$baseUrl/board/all");
@@ -48,6 +90,7 @@ class _BoardState extends State<Board> {
     }
   }
 
+  // 카테고리 필터 적용
   void applyCategoryFilter() {
     setState(() {
       filteredBoards = allBoards
@@ -62,6 +105,7 @@ class _BoardState extends State<Board> {
     });
   }
 
+  // 카테고리 변경 시 처리
   void onCategoryChanged(int newCno) {
     setState(() {
       cno = newCno;
@@ -69,6 +113,7 @@ class _BoardState extends State<Board> {
     });
   }
 
+  // 댓글이 있는지 확인하는 함수
   Future<bool> hasReplies(int bno) async {
     try {
       final response = await dio.get("$baseUrl/reply/view", queryParameters: {"bno": bno});
@@ -79,6 +124,7 @@ class _BoardState extends State<Board> {
     }
   }
 
+  // 새로 고침 처리
   Future<void> _onRefresh() async {
     await fetchAllBoards();
   }
@@ -97,8 +143,9 @@ class _BoardState extends State<Board> {
       });
     }
 
+    // uid가 null이 아닌 경우 AdminAppBar 사용, null이면 MyAppBar 사용
     return Scaffold(
-      appBar: MyAppBar(),
+      appBar : (ustate == 1 ? AdminAppBar() : MyAppBar()), // UID에 따라 앱바 변경
       backgroundColor: Colors.white,
       body: RefreshIndicator(
         onRefresh: _onRefresh,
@@ -134,7 +181,6 @@ class _BoardState extends State<Board> {
                 itemCount: filteredBoards.length,
                 itemBuilder: (context, index) {
                   final board = filteredBoards[index];
-
                   return InkWell(
                     onTap: () {
                       Navigator.push(
