@@ -99,6 +99,7 @@ class _BoardState extends State<Board> {
 
     return Scaffold(
       appBar: MyAppBar(),
+      backgroundColor: Colors.white,
       body: RefreshIndicator(
         onRefresh: _onRefresh,
         child: Column(
