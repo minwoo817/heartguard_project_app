@@ -55,22 +55,20 @@ class _SubmitPageState extends State<SubmitPage> {
   }
 
   void initializeWebSocket() async {
-
     try {
-      // WebSocket 채널 초기화
+      String phone = await GetPhoneNumber().get();
       channel = WebSocketChannel.connect(
-        Uri.parse('ws://192.168.40.40:8080/ws/user'),
+        Uri.parse('ws://192.168.40.40:8080/ws/user/$phone'),
       );
-      print('WebSocket에 입장 완료');
 
-      // WebSocket으로 메시지 수신
+      // WebSocket에 핸드폰 번호 등록 메시지 전송
+
+      channel?.sink.add("신고접수:$phone");
+
       channel?.stream.listen((message) {
-        if (!mounted) return;
-
         setState(() {
           socketMessages.add(message);
         });
-        // SnackBar 알림
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text("$message"),
@@ -79,7 +77,6 @@ class _SubmitPageState extends State<SubmitPage> {
           ),
         );
       });
-
     } catch (e) {
       print('WebSocket 연결 실패: $e');
     }
