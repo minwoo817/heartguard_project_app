@@ -58,7 +58,7 @@ class _SubmitPageState extends State<SubmitPage> {
     try {
       String phone = await GetPhoneNumber().get();
       channel = WebSocketChannel.connect(
-        Uri.parse('ws://192.168.40.40:8080/ws/user/$phone'),
+        Uri.parse('ws://192.168.40.45:8080/ws/user/$phone'),
       );
       // WebSocket에 핸드폰 번호 등록 메시지 전송
       // channel?.sink.add("신고접수:$phone");
@@ -86,7 +86,7 @@ class _SubmitPageState extends State<SubmitPage> {
 
       Dio dio = Dio();
       final response = await dio.post(
-        "http://192.168.40.40:8080/log/submit",
+        "http://192.168.40.45:8080/log/submit",
         data: sendData,
       );
 
