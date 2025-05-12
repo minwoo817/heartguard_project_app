@@ -36,7 +36,7 @@ class _HlogState extends State<Hlog> {
     try {
       // WebSocket 채널 초기화
       channel = WebSocketChannel.connect(
-        Uri.parse('ws://192.168.40.40:8080/ws/hospital'),
+        Uri.parse('ws://192.168.40.45:8080/ws/hospital'),
       );
       print('WebSocket에 입장 완료');
 
@@ -74,7 +74,7 @@ class _HlogState extends State<Hlog> {
 
     try {
       final response = await dio.get(
-        'http://192.168.40.40:8080/log/view',
+        'http://192.168.40.45:8080/log/view',
         options: Options(
           headers: {'Authorization': 'Bearer $token'},
         ),
@@ -130,7 +130,7 @@ class _HlogState extends State<Hlog> {
     final dio = Dio();
     try {
       final response = await dio.post(
-        'http://192.168.40.40:8080/log/state',
+        'http://192.168.40.45:8080/log/state',
         data: {"lno": lno, "lstate": 1},
       );
       if (response.statusCode == 200) fetchLogs();
@@ -143,7 +143,7 @@ class _HlogState extends State<Hlog> {
     final dio = Dio();
     try {
       final response = await dio.post(
-        'http://192.168.40.40:8080/log/state',
+        'http://192.168.40.45:8080/log/state',
         data: {"lno": lno, "lstate": 0},
       );
       if (response.statusCode == 200) fetchLogs();
