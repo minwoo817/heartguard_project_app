@@ -533,82 +533,40 @@ class _MapViewState extends State<MapView> {
 
   // 네이버 지도 앱 열기 (자동차 경로 표시)
   void _openNaverMap(double lat, double lon, String name) async {
-    const double fixedLat = 37.4910;
-    const double fixedLon = 126.7206;
+    double fixedLat = _currentPosition!.latitude;
+    double fixedLon = _currentPosition!.longitude;
     const String fixedLocationName = "더조은아카데미";
-
     try {
-      // 네이버 지도 자동차 경로 안내 URL 스킴
-      final url = 'nmap://route/car?slat=$fixedLat&slng=$fixedLon&sname=${Uri.encodeComponent(fixedLocationName)}&dlat=$lat&dlng=$lon&dname=${Uri.encodeComponent(name)}&appname=com.example.heartguard';
-
+      final url = 'nmap://route/car?'
+          'slat=$fixedLat&slng=$fixedLon&sname=${Uri.encodeComponent(fixedLocationName)}'
+          '&dlat=$lat&dlng=$lon&dname=${Uri.encodeComponent(name)}'
+          '&appname=com.example.heartguard';
       bool canLaunchNmap = await canLaunchUrl(Uri.parse(url));
-      print('Can launch nmap:// URL: $canLaunchNmap'); // 디버깅용
-
       if (canLaunchNmap) {
-        bool launched = await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-        print('Nmap launched: $launched'); // 디버깅용
+        bool launched = await launchUrl(Uri.parse(url),
+            mode: LaunchMode.externalApplication);
         if (launched) return;
       }
-
-      print('네이버 지도 앱이 설치되어 있지 않음. 플레이 스토어로 이동...'); // 디버깅용
-
-      // 다양한 플레이 스토어 URL 시도
       List<String> storeUrls = [
         'market://details?id=com.nhn.android.nmap',
         'https://play.google.com/store/apps/details?id=com.nhn.android.nmap',
         'market://search?q=naver+map',
       ];
-
       for (String storeUrl in storeUrls) {
         try {
-          print('플레이 스토어 URL 시도: $storeUrl'); // 디버깅용
-
           bool canLaunchStore = await canLaunchUrl(Uri.parse(storeUrl));
-          print('Can launch store URL: $canLaunchStore'); // 디버깅용
-
           if (canLaunchStore) {
             bool launched = await launchUrl(
               Uri.parse(storeUrl),
               mode: LaunchMode.externalApplication,
             );
-            print('Store launched: $launched'); // 디버깅용
-
-            if (launched) {
-              // 성공적으로 플레이 스토어가 열렸음을 알림
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('네이버 지도 앱을 다운로드해주세요.'),
-                  duration: Duration(seconds: 3),
-                ),
-              );
-              return;
-            }
           }
         } catch (e) {
           print('플레이 스토어 URL 오류 ($storeUrl): $e');
         }
       }
-
-      // 모든 시도가 실패한 경우
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('플레이 스토어를 열 수 없습니다. 직접 네이버 지도를 검색해주세요.'),
-          duration: Duration(seconds: 3),
-          action: SnackBarAction(
-            label: '알겠습니다',
-            onPressed: () {},
-          ),
-        ),
-      );
-
     } catch (e) {
       print('전체 오류: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('오류가 발생했습니다: ${e.toString()}'),
-          duration: Duration(seconds: 3),
-        ),
-      );
     }
   }
 
