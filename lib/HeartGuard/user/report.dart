@@ -60,22 +60,12 @@ class _SubmitPageState extends State<SubmitPage> {
       channel = WebSocketChannel.connect(
         Uri.parse('ws://192.168.40.40:8080/ws/user/$phone'),
       );
-
       // WebSocket에 핸드폰 번호 등록 메시지 전송
-
-      channel?.sink.add("신고접수:$phone");
-
+      // channel?.sink.add("신고접수:$phone");
       channel?.stream.listen((message) {
         setState(() {
-          socketMessages.add(message);
+          resultMessage = "$message";
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("$message"),
-            backgroundColor: Colors.orange.shade600,
-            duration: Duration(seconds: 3),
-          ),
-        );
       });
     } catch (e) {
       print('WebSocket 연결 실패: $e');
