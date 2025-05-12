@@ -12,11 +12,10 @@ class MapView extends StatefulWidget {
 }
 
 class _MapViewState extends State<MapView> {
-  NaverMapController? _mapController; // null 가능 타입으로 변경
+  NaverMapController? _mapController;
   NLatLng? _currentPosition; // GPS 위치
   NMarker? _currentMarker; // GPS 위치 마커
   final dio = Dio();
-  String? _selectedMarkerId; // 선택된 마커 ID
 
   // 모든 병원/AED 데이터를 저장
   List<Map<String, dynamic>> _allHospitals = [];
@@ -29,9 +28,10 @@ class _MapViewState extends State<MapView> {
   @override
   void initState() {
     super.initState();
-    _requestLocationPermission(); // 권한 요청
+    _requestLocationPermission();
   }
 
+  // 권한 요청
   Future<void> _requestLocationPermission() async {
     final status = await Permission.location.request();
     if (status.isGranted) {
@@ -43,6 +43,7 @@ class _MapViewState extends State<MapView> {
     }
   }
 
+  // GPS
   Future<void> _getCurrentLocation() async {
     try {
       Position pos = await Geolocator.getCurrentPosition(
@@ -100,23 +101,14 @@ class _MapViewState extends State<MapView> {
   Future<void> _loadHospitalData() async {
     try {
       final response = await dio.get("http://192.168.40.45:8080/map/gethospital");
-      print("[_loadHospitalData] 응답 수신 완료");
-      print("[_loadHospitalData] Raw response: ${response.data}");
 
       if (response.data is List) {
         _allHospitals = List<Map<String, dynamic>>.from(response.data);
       } else if (response.data is Map) {
         _allHospitals = [Map<String, dynamic>.from(response.data)];
       } else {
-        print("[_loadHospitalData] 예상치 못한 데이터 형식: ${response.data.runtimeType}");
+        print("[_loadHospitalData] 오류 : ${response.data.runtimeType}");
         _allHospitals = [];
-      }
-
-      print("[_loadHospitalData] 병원 데이터 개수: ${_allHospitals.length}");
-
-      // 첫 몇 개의 병원 데이터를 확인해보기
-      for (int i = 0; i < (_allHospitals.length < 5 ? _allHospitals.length : 5); i++) {
-        print("[_loadHospitalData] 병원 $i: ${_allHospitals[i]}");
       }
     } catch (e) {
       print("[_loadHospitalData] 오류 발생: $e");
@@ -128,9 +120,7 @@ class _MapViewState extends State<MapView> {
   Future<void> _loadAedData() async {
     try {
       final response = await dio.get("http://192.168.40.45:8080/heart/api1");
-      print("[_loadAedData] AED 데이터 응답 수신 완료");
       _allAeds = List<Map<String, dynamic>>.from(response.data);
-      print("[_loadAedData] AED 데이터 개수: ${_allAeds.length}");
     } catch (e) {
       print("[_loadAedData] 오류 발생: $e");
     }
@@ -169,20 +159,10 @@ class _MapViewState extends State<MapView> {
       int hospitalCount = 0;
       int hospitalInBounds = 0;
       int hospitalMarkerAdded = 0;
-      print("\n=== 병원 마커 처리 시작 ===");
-      print("전체 병원 데이터 개수: ${_allHospitals.length}");
-      print("화면 범위: SW(${viewportBounds.southWest.latitude}, ${viewportBounds.southWest.longitude}) NE(${viewportBounds.northEast.latitude}, ${viewportBounds.northEast.longitude})");
 
       for (int i = 0; i < _allHospitals.length; i++) {
         try {
           final hospital = _allHospitals[i];
-
-          if (i < 2) {
-            print("\n병원 $i 처리 중...");
-            print("hno: ${hospital["hno"]}");
-            print("hlat: ${hospital["hlat"]} (타입: ${hospital["hlat"].runtimeType})");
-            print("hlong: ${hospital["hlong"]} (타입: ${hospital["hlong"].runtimeType})");
-          }
 
           // 다양한 데이터 타입에 대한 처리
           final dynamic hlatValue = hospital["hlat"];
@@ -213,13 +193,10 @@ class _MapViewState extends State<MapView> {
             continue;
           }
 
-          if (i < 2) print("파싱된 좌표: ($lat, $lon)");
-
           final position = NLatLng(lat, lon);
           hospitalCount++;
 
           bool isInBounds = _isPositionInBounds(position, viewportBounds);
-          if (i < 2) print("화면 범위 내인가? $isInBounds");
 
           if (isInBounds) {
             hospitalInBounds++;
@@ -257,13 +234,6 @@ class _MapViewState extends State<MapView> {
           print("문제 병원 데이터: ${_allHospitals[i]}");
         }
       }
-
-      print("\n=== 병원 마커 처리 결과 ===");
-      print("처리된 병원 총 개수: $hospitalCount / ${_allHospitals.length}");
-      print("화면 범위 내 병원 개수: $hospitalInBounds");
-      print("새로 추가된 병원 마커 개수: $hospitalMarkerAdded");
-      print("전체 병원 마커 개수: ${newVisibleMarkers.keys.where((key) => key.startsWith('hospital_')).length}");
-      print("================================\n");
 
       // 화면 범위 내의 AED 마커 확인 및 추가
       for (int i = 0; i < _allAeds.length; i++) {
@@ -323,10 +293,6 @@ class _MapViewState extends State<MapView> {
 
       _visibleMarkers.clear();
       _visibleMarkers.addAll(newVisibleMarkers);
-
-      print("현재 화면에 표시된 마커 수: ${_visibleMarkers.length}");
-      print("병원 마커: ${_visibleMarkers.keys.where((key) => key.startsWith('hospital_')).length}");
-      print("AED 마커: ${_visibleMarkers.keys.where((key) => key.startsWith('aed_')).length}");
 
     } catch (e) {
       print("마커 업데이트 중 오류 발생: $e");
