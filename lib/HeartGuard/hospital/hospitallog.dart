@@ -20,7 +20,7 @@ class _HospitallogState extends State<Hospitallog> {
 
   Future<void> fetchHospitalLogs() async {
     try {
-      final response = await Dio().get('http://192.168.40.13:8080/hospital/all');
+      final response = await Dio().get('http://192.168.40.40:8080/hospital/all');
       if (response.statusCode == 200) {
         setState(() {
           hospitalLogs = response.data ?? []; // null이면 빈 리스트로 초기화
